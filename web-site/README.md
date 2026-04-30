@@ -30,10 +30,10 @@ web-site/
    Si no hay JavaScript, un `<meta refresh>` lo manda a la versión inglesa
    tras dos segundos. En cualquier caso, la pantalla muestra los tres
    idiomas como botones para elegir manualmente.
-3. Cada HUB lista los **programas disponibles** en tarjetas con badge de
-   estado (estable / beta / próximamente), versión, licencias e idiomas
-   soportados. Hoy contiene una sola tarjeta — **PAdicMIDI v1.0.0** — más
-   un *placeholder* preparado para futuros proyectos.
+3. Cada HUB lista los **programas disponibles** en tarjetas con
+   indicador de estado (estable / beta / próximamente), versión,
+   licencias e idiomas soportados. Hoy contiene una sola tarjeta:
+   **PAdicMIDI v1.0.0**.
 4. Desde el HUB, **Ver detalles** abre la landing detallada del proyecto
    (`padicmidi.{es,en,fr}.html`), donde se documenta el método, las
    instrucciones de instalación y los artículos asociados.

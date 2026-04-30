@@ -35,11 +35,11 @@ platforms may exhibit minor numerical drift in the K-means stage.
 The following table summarises the gold-standard checks; the full validation is
 performed by `pytest tests/paper_values/`.
 
-| Quantity | Source | Expected | Obtained (current) | Tolerance | OK |
+| Quantity | Source | Expected | Obtained (current) | Tolerance | Status |
 |---|---|---|---|---|:---:|
-| $\mathrm{Coh}_\pi(2,n)$ for BWV 1007 prelude, beats axis, $n=1..5$ | Paper 2 §5 | 0.500000 exact | 0.500, 0.500, 0.500, 0.500, 0.500 | $0$ (structural) | ✅ |
-| $\mathrm{Coh}_\pi(3,3)$ for BWV 1007 Sarabande matched ($r=p=3$) | Paper 2 §5 | $\approx 0.90$ | 0.901235 | $\pm 0.05$ | ✅ |
-| $\mathrm{Coh}_\pi(3,3)$ for BWV 1007 Prelude mismatched ($r=2, p=3$) | Paper 2 §5 | $\approx 0.36$ (near $1/3$ floor) | 0.358025 | $\pm 0.04$ | ✅ |
+| $\mathrm{Coh}_\pi(2,n)$ for BWV 1007 prelude, beats axis, $n=1..5$ | Paper 2 §5 | 0.500000 exact | 0.500, 0.500, 0.500, 0.500, 0.500 | $0$ (structural) | pass |
+| $\mathrm{Coh}_\pi(3,3)$ for BWV 1007 Sarabande matched ($r=p=3$) | Paper 2 §5 | $\approx 0.90$ | 0.901235 | $\pm 0.05$ | pass |
+| $\mathrm{Coh}_\pi(3,3)$ for BWV 1007 Prelude mismatched ($r=2, p=3$) | Paper 2 §5 | $\approx 0.36$ (near $1/3$ floor) | 0.358025 | $\pm 0.04$ | pass |
 
 ## Verifying integrity
 

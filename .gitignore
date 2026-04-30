@@ -44,6 +44,10 @@ indautor/
 USB-PAdicMIDI-INDAUTOR-v1.0.0/
 USB-PAdicMIDI-INDAUTOR-v1.0.0.zip
 
+# Guías operativas internas para el autor (despliegue web, Zenodo).
+# Útiles localmente, no son parte del software publicado.
+_handoff/
+
 # Artefactos de LaTeX
 REPORTE-TECNICO/*.aux
 REPORTE-TECNICO/*.log

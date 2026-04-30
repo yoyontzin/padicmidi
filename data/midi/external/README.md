@@ -7,10 +7,10 @@ reason, the files are not all included by default in v1.0.0.
 
 | File | Piece | Source | Licence | Included in v1.0.0 |
 |---|---|---|---|---|
-| `bwv1049_mov1.mid`, `_mov2.mid`, `_mov3.mid` | Brandenburg Concerto No. 4, BWV 1049 (3 movements) | (audit pending — likely Mutopia or KernScores) | TBD | ❌ |
-| `bwv1050_mov1.mid`, `_mov2.mid`, `_mov3.mid` | Brandenburg Concerto No. 5, BWV 1050 (3 movements) | (audit pending) | TBD | ❌ |
-| `bwv1079_crab.mid` | The Musical Offering, Crab Canon | (audit pending) | TBD | ❌ |
-| `goldberg_aria.mid` | Goldberg Variations, Aria | (audit pending) | TBD | ❌ |
+| `bwv1049_mov1.mid`, `_mov2.mid`, `_mov3.mid` | Brandenburg Concerto No. 4, BWV 1049 (3 movements) | likely Mutopia Project or KernScores; user must verify locally | to be verified by the user | no |
+| `bwv1050_mov1.mid`, `_mov2.mid`, `_mov3.mid` | Brandenburg Concerto No. 5, BWV 1050 (3 movements) | likely Mutopia Project or KernScores; user must verify locally | to be verified by the user | no |
+| `bwv1079_crab.mid` | The Musical Offering, Crab Canon | likely Mutopia Project or KernScores; user must verify locally | to be verified by the user | no |
+| `goldberg_aria.mid` | Goldberg Variations, Aria | likely Mutopia Project or KernScores; user must verify locally | to be verified by the user | no |
 
 ## How to populate this folder
 

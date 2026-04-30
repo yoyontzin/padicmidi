@@ -1,11 +1,8 @@
 # Especificación matemática — PAdicMIDI
 
-**Skill aplicado:** `research-software-builder` (Movimiento 1)
+**Versión:** 1.0.0
 **Fecha:** 2026-04-29
-**Fuente primaria:**
-- Paper 2 (jerárquico): `Paper-ZpMusic-20250206/paper/sections/03_method.tex`
-- Código canónico: `profinite_echo_midi.py` (raíz) + `scripts/build_hierarchical_maps.py`
-**Convención editorial:** notación matemática en LaTeX inline; código y archivos en backticks.
+**Convención:** notación matemática en LaTeX inline; nombres de código y archivos en backticks.
 
 ---
 
@@ -283,12 +280,11 @@ Estas hipótesis se verifican vía las columnas `V_SC_pi`, `AI_pi` del archivo `
 
 ---
 
-## 9. Salida del Movimiento 1
+## 9. Política de versionado y modificaciones
 
-Este `MATH-SPEC.md` fija la convención. Cualquier modificación al algoritmo o a los parámetros default debe:
+Cualquier modificación al algoritmo o a los parámetros por defecto debe:
 
-1. Versionar (`v1.0.0` actual; bump a `v1.1.0` si cambian pisos numéricos esperados).
-2. Re-ejecutar tests `tests/paper_values/` y actualizar gold standard.
-3. Documentar la decisión en `CHANGELOG.md` y `PROJECT-STATE.md`.
-
-**Próximo movimiento:** Movimiento 2 (`CODE-AUDIT.md`) — clasificar cada archivo Python, verificar reproducción de los valores arriba, identificar discrepancias.
+1. Subir el número de versión (`v1.0.0` actual; bump a `v1.1.0` si cambian
+   pisos numéricos esperados).
+2. Re-ejecutar `pytest tests/paper_values/` y actualizar el gold standard.
+3. Documentar la decisión en `CHANGELOG.md`.

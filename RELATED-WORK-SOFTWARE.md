@@ -1,8 +1,10 @@
 # Software relacionado y posicionamiento — PAdicMIDI
 
-**Skill:** `research-software-builder` (Movimiento 3)
+**Versión:** 1.0.0
 **Fecha:** 2026-04-29
-**Propósito:** documentar el gap que llena PAdicMIDI; este texto se reutiliza en `README.md` y en el dossier INDAUTOR (sección "originalidad").
+**Propósito:** documentar el hueco que llena PAdicMIDI en el ecosistema de
+software para música simbólica; este texto se reutiliza en `README.md` y en
+el dossier INDAUTOR (sección "originalidad").
 
 ---
 
@@ -36,14 +38,14 @@ Búsqueda en PyPI, GitHub y literatura MIR. Categorías exhaustivas de toolkits 
 Ninguno de los toolkits anteriores implementa **análisis aritmético-topológico p-ádico (ATDA)** sobre series de tiempo extraídas de música simbólica. Específicamente, ninguno provee:
 
 | Funcionalidad PAdicMIDI | Disponible en otros |
-|---|:---:|
-| Construcción de **torre de espacios de patrones** $D_{p,n}$ con $N = p^n$ a partir de un MIDI | ❌ — exclusivo PAdicMIDI |
-| Cuantizadores $f_n$ vía K-means jerárquico forzado por $\pi_{n+1,n}$ | ❌ |
-| Cómputo del invariante $\mathrm{Coh}_\pi(p,n)$ y comparación contra el piso nulo $1/p$ | ❌ |
-| Diagnóstico de hipótesis estructurales (Sibling-Coverage, Ancestor-Inclusion) | ❌ |
-| β₀ del grafo $k$-NN sobre $S_n$ por nivel y por primo de control | ❌ — los TDA toolkits hacen $\beta_0$ pero no en esta torre p-ádica |
-| Pipeline batch para suite de MIDIs con ejes seconds y beats | parcial (drivers ad-hoc en otros papers) |
-| Auditoría de coherencia con CSV `audit_p{p}.csv` | ❌ |
+|---|---|
+| Construcción de **torre de espacios de patrones** $D_{p,n}$ con $N = p^n$ a partir de un MIDI | no — exclusivo de PAdicMIDI |
+| Cuantizadores $f_n$ vía K-means jerárquico forzado por $\pi_{n+1,n}$ | no |
+| Cómputo del invariante $\mathrm{Coh}_\pi(p,n)$ y comparación contra el piso nulo $1/p$ | no |
+| Diagnóstico de hipótesis estructurales (Sibling-Coverage, Ancestor-Inclusion) | no |
+| $\beta_0$ del grafo $k$-NN sobre $S_n$ por nivel y por primo de control | no — los toolkits TDA calculan $\beta_0$ pero no sobre esta torre p-ádica |
+| Pipeline en lote para una suite de MIDIs con ejes en segundos y en beats | parcial (existen drivers ad-hoc en otros artículos) |
+| Auditoría de coherencia mediante CSV `audit_p{p}.csv` | no |
 
 Los toolkits citados (especialmente `music21`, `muspy`, `partitura`) son **complementarios**: se podrían usar como front-end de I/O alternativo. PAdicMIDI usa `mido` directamente para minimizar dependencias y porque la información necesaria para los algoritmos (tiempos en beats vs seconds, pitch class, velocity) es un subconjunto pequeño del API completo de `mido`.
 
@@ -80,8 +82,5 @@ Parráfo redactado para `descripcion-funcional.md`:
 
 > *PAdicMIDI es un programa de cómputo en lenguaje Python que implementa por primera vez en software de uso público el marco teórico de Análisis Aritmético-Topológico p-ádico (ATDA) aplicado a música simbólica. A diferencia de bibliotecas existentes para procesamiento MIDI (mido, music21, muspy, miditok, symusic, partitura, pretty_midi, pypianoroll, pyAMPACT, pytakt), que se especializan en entrada/salida, tokenización para aprendizaje profundo, análisis musicológico clásico o alineación score-audio, PAdicMIDI construye torres p-ádicas de espacios de patrones $D_{p,n}$ inducidas por la estructura beat-síncrona o segundo-síncrona de un archivo MIDI, calcula el invariante de coherencia $\mathrm{Coh}_\pi(p,n)$ del sistema inverso $\pi_{n+1,n}$ asociado, lo compara con el piso nulo arquitectónico $1/p$, y produce un diagnóstico cuantitativo de textura musical (aridez, polifonía, jerarquía métrica). El programa se acompaña de un applet HTML autocontenido que automatiza el análisis a partir de un archivo MIDI proporcionado por el usuario.*
 
-(Versión final aparecerá en el dossier; aquí queda documentada la fuente.)
-
----
-
-**Próximo movimiento:** Movimiento 4 (`ARCHITECTURE-PROPOSAL.md`) — propuesta de arquitectura para el código y el dossier; requiere aprobación explícita del investigador antes de avanzar al Movimiento 5 (implementación).
+El texto anterior es el utilizado en `indautor/descripcion-funcional.md`
+para documentar la originalidad del programa frente al estado del arte.

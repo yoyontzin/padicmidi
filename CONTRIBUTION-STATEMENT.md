@@ -41,8 +41,7 @@ version 1.0.0, dated 2026-04-29.
 
 | Version | Date | Notes |
 |---|---|---|
-| v0.0.x | 2026-04-29 | Documents of Movements −1 to 4 (skill `research-software-builder`) |
-| v1.0.0 | 2026-04-29 | First public release; INDAUTOR registered version |
+| v1.0.0 | 2026-04-29 | First public release; version registered before INDAUTOR (México) under format RPDA-03 |
 
 ## Assignment of rights
 
