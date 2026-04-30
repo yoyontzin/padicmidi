@@ -1,0 +1,53 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "PAdicMIDI: A Python Toolkit for Hierarchical, Ultrametric, and p-adic Analysis of Symbolic Music Data"
+abbreviation: "PAdicMIDI"
+version: "1.0.0"
+date-released: "2026-04-29"
+authors:
+  - family-names: "Pérez-Buendía"
+    given-names: "J. Rogelio"
+    name-particle: ""
+    alias: "Jesús Rogelio Pérez Buendía"
+    orcid: "https://orcid.org/0000-0002-7739-4779"
+    affiliation: "SECIHTI — Centro de Investigación en Matemáticas (CIMAT), Unidad Mérida"
+    website: "https://www.cimat.mx/~rogelio.perez"
+    email: "rogelio@cimat.mx"
+license: "MIT"
+url: "https://github.com/yoyontzin/padicmidi"
+keywords:
+  - p-adic analysis
+  - symbolic music
+  - MIDI
+  - profinite completion
+  - hierarchical clustering
+  - ultrametric
+  - topological data analysis
+  - music information retrieval
+preferred-citation:
+  type: software
+  title: "PAdicMIDI: A Python Toolkit for Hierarchical, Ultrametric, and p-adic Analysis of Symbolic Music Data"
+  authors:
+    - family-names: "Pérez-Buendía"
+      given-names: "J. Rogelio"
+      orcid: "https://orcid.org/0000-0002-7739-4779"
+      website: "https://www.cimat.mx/~rogelio.perez"
+  version: "1.0.0"
+  year: 2026
+  url: "https://github.com/yoyontzin/padicmidi"
+references:
+  - type: article
+    title: "Prime-power indexed multiscale graph diagnostics for symbolic temporal data: methodological exploration and delimitation via BWV 1007"
+    authors:
+      - family-names: "Pérez-Buendía"
+        given-names: "J. Rogelio"
+    year: 2026
+    journal: "Journal of Mathematics and Music (submitted)"
+  - type: article
+    title: "Profinite hierarchical patterns and prime-indexed multiscale invariants in symbolic music"
+    authors:
+      - family-names: "Pérez-Buendía"
+        given-names: "J. Rogelio"
+    year: 2026
+    journal: "Computational and Applied Mathematics (submitted)"

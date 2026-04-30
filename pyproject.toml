@@ -1,0 +1,83 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "padicmidi"
+version = "1.0.0"
+description = "A Python Toolkit for Hierarchical, Ultrametric, and p-adic Analysis of Symbolic Music Data"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [
+    { name = "J. Rogelio Pérez-Buendía", email = "rogelio@cimat.mx" }
+]
+keywords = [
+    "p-adic",
+    "music information retrieval",
+    "symbolic music",
+    "MIDI",
+    "profinite",
+    "ultrametric",
+    "hierarchical clustering",
+    "topological data analysis",
+    "arithmetic data analysis"
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Multimedia :: Sound/Audio :: MIDI",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Topic :: Scientific/Engineering :: Information Analysis"
+]
+dependencies = [
+    "numpy>=2.0,<3.0",
+    "scipy>=1.13,<2.0",
+    "networkx>=3.2,<4.0",
+    "scikit-learn>=1.4,<2.0",
+    "matplotlib>=3.8,<4.0",
+    "mido>=1.3,<2.0",
+    "joblib>=1.3,<2.0"
+]
+
+[project.optional-dependencies]
+pretty = ["pretty_midi>=0.2.10"]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov",
+    "ruff",
+    "mypy"
+]
+
+[project.scripts]
+padicmidi             = "padicmidi.cli.main:main"
+padicmidi-run-one     = "padicmidi.cli.run_one:main"
+padicmidi-run-suite   = "padicmidi.cli.run_suite:main"
+padicmidi-benchmark   = "padicmidi.cli.benchmark:main"
+padicmidi-job-list    = "padicmidi.cli.job_list:main"
+padicmidi-mutopia     = "padicmidi.cli.mutopia:main"
+
+[project.urls]
+Homepage      = "https://github.com/yoyontzin/padicmidi"
+Documentation = "https://github.com/yoyontzin/padicmidi#readme"
+Issues        = "https://github.com/yoyontzin/padicmidi/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-q --strict-markers"
+
+[tool.ruff]
+line-length = 110
+target-version = "py310"

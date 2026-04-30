@@ -1,0 +1,56 @@
+CONTROL PRIMES SUMMARY (p=2,3,5,7)
+====================================
+p=2 and p=3 are the main primes (dyadic/ternary). p=5 and p=7 are pre-registered negative controls.
+Expected: separation (e.g. nonzero Delta23) for musically relevant pieces; control primes (p=5,7) may show flatter or different profiles.
+
+Piece: bwv1049_mov1_cap300
+  Rows: 48 (axis/config/k/n combinations).
+  Delta23 (beta0_p2 - beta0_p3): min=0, max=0; nonzero count=0.
+  Delta25, Delta27 (vs control primes): see SUMMARY_TABLE_p2357.csv.
+
+Piece: bwv1049_mov2_cap300
+  Rows: 54 (axis/config/k/n combinations).
+  Delta23 (beta0_p2 - beta0_p3): min=0, max=0; nonzero count=0.
+  Delta25, Delta27 (vs control primes): see SUMMARY_TABLE_p2357.csv.
+
+Piece: bwv1049_mov3_cap300
+  Rows: 54 (axis/config/k/n combinations).
+  Delta23 (beta0_p2 - beta0_p3): min=0, max=0; nonzero count=0.
+  Delta25, Delta27 (vs control primes): see SUMMARY_TABLE_p2357.csv.
+
+Piece: bwv1050_mov1_cap300
+  Rows: 54 (axis/config/k/n combinations).
+  Delta23 (beta0_p2 - beta0_p3): min=0, max=0; nonzero count=0.
+  Delta25, Delta27 (vs control primes): see SUMMARY_TABLE_p2357.csv.
+
+Piece: bwv1050_mov2_cap300
+  Rows: 54 (axis/config/k/n combinations).
+  Delta23 (beta0_p2 - beta0_p3): min=-2, max=2; nonzero count=13.
+  Delta25, Delta27 (vs control primes): see SUMMARY_TABLE_p2357.csv.
+
+Piece: bwv1050_mov3_cap300
+  Rows: 54 (axis/config/k/n combinations).
+  Delta23 (beta0_p2 - beta0_p3): min=0, max=0; nonzero count=0.
+  Delta25, Delta27 (vs control primes): see SUMMARY_TABLE_p2357.csv.
+
+Piece: bwv1079_crab_cap300
+  Rows: 54 (axis/config/k/n combinations).
+  Delta23 (beta0_p2 - beta0_p3): min=-2, max=5; nonzero count=39.
+  Delta25, Delta27 (vs control primes): see SUMMARY_TABLE_p2357.csv.
+
+Piece: bwv988_aria_cap300
+  Rows: 54 (axis/config/k/n combinations).
+  Delta23 (beta0_p2 - beta0_p3): min=-2, max=3; nonzero count=11.
+  Delta25, Delta27 (vs control primes): see SUMMARY_TABLE_p2357.csv.
+
+Piece: cs1_1pre
+  Rows: 80 (axis/config/k/n combinations).
+  Delta23 (beta0_p2 - beta0_p3): min=-8, max=7; nonzero count=49.
+
+Piece: cs1_1pre_cap300
+  Rows: 40 (axis/config/k/n combinations).
+  Delta23 (beta0_p2 - beta0_p3): min=-8, max=7; nonzero count=17.
+
+Piece: prelude
+  Rows: 90 (axis/config/k/n combinations).
+  Delta23 (beta0_p2 - beta0_p3): min=-8, max=7; nonzero count=57.

@@ -1,0 +1,22 @@
+SUMMARY REPORT — Precision tower benchmark (Phase I)
+============================================================
+
+(i) Top-5 (piece, axis, config) by number of levels n>=2 with stable Delta across k:
+  1. prelude seconds A: 4 levels
+  2. prelude seconds B: 4 levels
+  3. prelude seconds C: 4 levels
+  4. cs1_1pre_cap300 seconds A: 4 levels
+  5. cs1_1pre_cap300 seconds B: 4 levels
+
+(ii) Seconds vs beats per piece (mean |Delta| over config, k, n>=2):
+  cs1_1pre: seconds mean|Delta|=1.000
+         beats mean|Delta|=1.536
+  cs1_1pre_cap300: seconds mean|Delta|=1.125
+         beats (no data)
+  prelude: seconds mean|Delta|=1.000
+         beats mean|Delta|=1.417
+
+(iii) Diagnosis (k): mean |Delta| by k (all pieces, n>=2):
+  k=8: mean|Delta|=2.533 (n=60 points)
+  k=10: mean|Delta|=0.446 (n=56 points)
+  k=12: mean|Delta|=0.481 (n=52 points)

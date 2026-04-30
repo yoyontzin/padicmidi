@@ -1,0 +1,50 @@
+NULL MODEL PHASE I SUMMARY (PID_20260208_203500)
+===============================================
+
+bwv1049_mov1 | null_A | beats_bin12_cap300
+  MeanAbsD23=0.000000  MeanAbsD25=0.000000  MeanAbsD27=0.500000
+  RobustZero23=YES  Existence23=NO  S=0.0000
+
+bwv1049_mov1 | null_A | seconds_cap300
+  MeanAbsD23=0.000000  MeanAbsD25=0.000000  MeanAbsD27=0.500000
+  RobustZero23=YES  Existence23=NO  S=0.0000
+
+bwv1049_mov1 | null_B | beats_bin12_cap300
+  MeanAbsD23=0.000000  MeanAbsD25=0.000000  MeanAbsD27=0.500000
+  RobustZero23=YES  Existence23=NO  S=0.0000
+
+bwv1049_mov1 | null_B | seconds_cap300
+  MeanAbsD23=0.000000  MeanAbsD25=0.000000  MeanAbsD27=0.500000
+  RobustZero23=YES  Existence23=NO  S=0.0000
+
+bwv1049_mov1 | original | beats_bin12_cap300
+  MeanAbsD23=0.000000  MeanAbsD25=1.111111  MeanAbsD27=1.166667
+  RobustZero23=YES  Existence23=NO  S=0.0000
+
+bwv1049_mov1 | original | seconds_cap300
+  MeanAbsD23=0.000000  MeanAbsD25=0.000000  MeanAbsD27=0.000000
+  RobustZero23=YES  Existence23=NO  S=0.0000
+
+bwv1050_mov2 | null_A | beats_bin12_cap300
+  MeanAbsD23=0.000000  MeanAbsD25=0.000000  MeanAbsD27=0.500000
+  RobustZero23=YES  Existence23=NO  S=0.0000
+
+bwv1050_mov2 | null_A | seconds_cap300
+  MeanAbsD23=0.000000  MeanAbsD25=0.000000  MeanAbsD27=0.500000
+  RobustZero23=YES  Existence23=NO  S=0.0000
+
+bwv1050_mov2 | null_B | beats_bin12_cap300
+  MeanAbsD23=0.000000  MeanAbsD25=0.000000  MeanAbsD27=0.500000
+  RobustZero23=YES  Existence23=NO  S=0.0000
+
+bwv1050_mov2 | null_B | seconds_cap300
+  MeanAbsD23=0.000000  MeanAbsD25=0.000000  MeanAbsD27=0.500000
+  RobustZero23=YES  Existence23=NO  S=0.0000
+
+bwv1050_mov2 | original | beats_bin12_cap300
+  MeanAbsD23=0.777778  MeanAbsD25=1.666667  MeanAbsD27=3.166667
+  RobustZero23=NO  Existence23=YES  S=0.4444
+
+bwv1050_mov2 | original | seconds_cap300
+  MeanAbsD23=0.000000  MeanAbsD25=0.000000  MeanAbsD27=0.000000
+  RobustZero23=YES  Existence23=NO  S=0.0000

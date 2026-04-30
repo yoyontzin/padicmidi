@@ -1,0 +1,56 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+*.egg
+build/
+dist/
+.eggs/
+
+.venv/
+venv/
+env/
+ENV/
+.python-version
+
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.hypothesis/
+
+.mypy_cache/
+.ruff_cache/
+
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+results_local/
+*.log
+indautor/codigo-fuente/_build/
+
+# Dossier INDAUTOR (datos personales del autor: RFC, CURP, dirección).
+# Se entrega físicamente al Instituto Nacional del Derecho de Autor; no
+# es contenido público del proyecto. El código fuente que se registra
+# es exactamente el de `src/` y `web-demo/`, ya públicos en este repo.
+indautor/
+
+# Carpeta y ZIP generados para entrega INDAUTOR
+USB-PAdicMIDI-INDAUTOR-v1.0.0/
+USB-PAdicMIDI-INDAUTOR-v1.0.0.zip
+
+# Artefactos de LaTeX
+REPORTE-TECNICO/*.aux
+REPORTE-TECNICO/*.log
+REPORTE-TECNICO/*.out
+REPORTE-TECNICO/*.toc
+REPORTE-TECNICO/*.fls
+REPORTE-TECNICO/*.fdb_latexmk
+REPORTE-TECNICO/*.synctex.gz
+REPORTE-TECNICO/*.lof
+REPORTE-TECNICO/*.lot

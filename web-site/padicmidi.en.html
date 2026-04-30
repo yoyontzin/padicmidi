@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PAdicMIDI — p-adic analysis of symbolic music</title>
+<meta name="description" content="PAdicMIDI: Python toolkit and offline applet for hierarchical, ultrametric and p-adic analysis of symbolic music. Author: J. Rogelio Pérez-Buendía (CIMAT-Mérida)." />
+<meta name="author" content="J. Rogelio Pérez-Buendía" />
+<meta name="keywords" content="p-adic, ultrametric analysis, MIDI, symbolic music, MIR, profinite completion, P-ADAGIO, CIMAT, Pérez-Buendía" />
+<meta property="og:title" content="PAdicMIDI" />
+<meta property="og:description" content="Hierarchical p-adic analysis of symbolic music — Python package + in-browser applet." />
+<meta property="og:type" content="website" />
+<style>
+  :root {
+    --bg: #fbfbfd;
+    --fg: #1d1d1f;
+    --muted: #6e6e73;
+    --accent: #1d6f9f;
+    --accent-soft: #e7f1f7;
+    --accent-deep: #155a82;
+    --border: #d2d2d7;
+    --good: #2a7a3b;
+    --code-bg: #f4f4f7;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: var(--fg);
+    background: var(--bg);
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code { font-family: var(--mono); background: var(--code-bg); padding: 0.05em 0.35em; border-radius: 4px; font-size: 0.9em; }
+  pre { font-family: var(--mono); background: #1d1d1f; color: #f4f4f4; padding: 1rem; border-radius: 8px; overflow-x: auto; font-size: 0.88rem; line-height: 1.45; }
+  pre code { background: transparent; padding: 0; color: inherit; font-size: inherit; }
+
+  .container { max-width: 880px; margin: 0 auto; padding: 0 1.2rem; }
+
+  .topbar {
+    background: white;
+    border-bottom: 1px solid var(--border);
+    padding: 0.7rem 0;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    backdrop-filter: saturate(180%) blur(20px);
+    background: rgba(255,255,255,0.85);
+  }
+  .topbar .container { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; }
+  .brand { font-weight: 600; font-size: 1.05rem; color: var(--fg); }
+  .brand-sub { color: var(--muted); font-weight: 400; font-size: 0.85rem; margin-left: 0.4rem; }
+  .lang-switch { font-size: 0.88rem; }
+  .lang-switch a { padding: 0.3rem 0.7rem; border-radius: 6px; }
+  .lang-switch .active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+
+  .hero { padding: 4rem 0 2.5rem; text-align: center; }
+  .hero h1 {
+    font-family: var(--serif);
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 600;
+    margin: 0 0 0.6rem;
+    letter-spacing: -0.02em;
+  }
+  .hero .tagline { font-size: 1.15rem; color: var(--muted); max-width: 640px; margin: 0 auto 0.8rem; }
+  .hero .pill { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 16px; background: var(--accent-soft); color: var(--accent); font-size: 0.85rem; margin: 0.4rem 0.2rem; }
+  .hero .ctas { margin-top: 1.8rem; display: flex; gap: 0.8rem; justify-content: center; flex-wrap: wrap; }
+  .btn {
+    display: inline-block;
+    padding: 0.7rem 1.3rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: 0.15s;
+    border: 1px solid transparent;
+    font-size: 0.95rem;
+  }
+  .btn.primary { background: var(--accent); color: white; }
+  .btn.primary:hover { background: var(--accent-deep); text-decoration: none; }
+  .btn.secondary { background: white; color: var(--accent); border-color: var(--accent); }
+  .btn.secondary:hover { background: var(--accent-soft); text-decoration: none; }
+
+  section.block { padding: 2.5rem 0; border-top: 1px solid var(--border); }
+  section.block:first-of-type { border-top: none; }
+  section.block h2 {
+    font-family: var(--serif);
+    font-size: 1.6rem;
+    font-weight: 600;
+    margin: 0 0 1rem;
+    letter-spacing: -0.01em;
+  }
+  section.block h3 { font-size: 1.05rem; margin: 1.2rem 0 0.5rem; }
+  section.block p { margin: 0 0 0.9rem; }
+
+  .grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  .card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.1rem;
+  }
+  .card h3 { margin-top: 0; }
+  .card p { color: var(--muted); margin: 0; font-size: 0.94rem; }
+
+  ul.refs { list-style: none; padding: 0; }
+  ul.refs li { padding: 0.7rem 0; border-bottom: 1px solid var(--border); }
+  ul.refs li:last-child { border-bottom: none; }
+  ul.refs em { font-style: italic; }
+  ul.refs .meta { color: var(--muted); font-size: 0.88rem; display: block; margin-top: 0.2rem; }
+
+  table.kv { border-collapse: collapse; width: 100%; }
+  table.kv td { padding: 0.4rem 0.6rem; border-bottom: 1px solid var(--border); }
+  table.kv td:first-child { color: var(--muted); width: 30%; }
+
+  footer {
+    background: white;
+    border-top: 1px solid var(--border);
+    padding: 1.6rem 0;
+    color: var(--muted);
+    font-size: 0.88rem;
+    text-align: center;
+  }
+  footer a { color: var(--muted); text-decoration: underline; }
+
+  .math { font-family: "Cambria Math", "STIX Two Math", "Latin Modern Math", serif; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="container">
+    <div class="brand">
+      <a href="index.en.html" style="color: var(--muted); font-weight: 400;">← Home</a>
+      &nbsp;·&nbsp;
+      PAdicMIDI <span class="brand-sub">v1.0.0 · MIT</span>
+    </div>
+    <div class="lang-switch">
+      <a href="padicmidi.es.html">ES</a>
+      <a href="padicmidi.en.html" class="active">EN</a>
+      <a href="padicmidi.fr.html">FR</a>
+    </div>
+  </div>
+</div>
+
+<header class="hero">
+  <div class="container">
+    <h1>PAdicMIDI</h1>
+    <p class="tagline">
+      Hierarchical, ultrametric and <em>p</em>-adic analysis of symbolic music.
+      A Python package and an offline applet that compute the invariant
+      <span class="math">Coh<sub>π</sub>(p,n)</span> on a MIDI file.
+    </p>
+    <span class="pill">research software</span>
+    <span class="pill">100% offline</span>
+    <span class="pill">MIT licence</span>
+    <span class="pill">28 tests pass</span>
+    <div class="ctas">
+      <a class="btn primary" href="applet.html">Try the applet</a>
+      <a class="btn secondary" href="#install">Install the package</a>
+    </div>
+  </div>
+</header>
+
+<section class="block">
+  <div class="container">
+    <h2>What is PAdicMIDI?</h2>
+    <p>
+      PAdicMIDI is the first publicly released software implementation of the
+      <strong>Arithmetic-Topological Data Analysis (ATDA)</strong> framework
+      applied to symbolic music. Given a Standard MIDI file, the program
+      builds a <em>p-adic tower of pattern spaces</em>
+      <span class="math">D<sub>p,n</sub></span>, explicitly defines the inverse
+      system <span class="math">π<sub>n+1,n</sub>: S<sub>n+1</sub> → S<sub>n</sub></span>,
+      and computes the coherence invariant
+      <span class="math">Coh<sub>π</sub>(p,n)</span> together with its
+      <em>architectural null floor</em> <span class="math">1/p</span>.
+    </p>
+    <p>
+      The floor <span class="math">1/p</span> is the lower bound predicted by
+      Proposition 3.1 of the second companion paper: pieces whose binary or
+      ternary structure satisfies the (SC) sibling-cover and (AI)
+      ancestor-inclusion hypotheses attain the floor <em>exactly</em>.
+      Polyphonic pieces deviate from the floor in a measurable way, yielding
+      a new quantitative descriptor of musical texture.
+    </p>
+  </div>
+</section>
+
+<section class="block">
+  <div class="container">
+    <h2>Key features</h2>
+    <div class="grid">
+      <div class="card">
+        <h3>Verifiable engine</h3>
+        <p>1809 + 417 lines of pure Python. Reproduces published numerical
+           values to bit equivalence on macOS arm64.</p>
+      </div>
+      <div class="card">
+        <h3>CLI and Python API</h3>
+        <p>Five command-line entry points
+           (<code>padicmidi-run-one</code>, <code>-suite</code>, …) and a
+           stable API via <code>run_hierarchical_from_midi</code>.</p>
+      </div>
+      <div class="card">
+        <h3>Offline applet</h3>
+        <p>A single self-contained HTML file (~35 KB) with its own
+           JavaScript MIDI parser and the BWV 1007 demo embedded in
+           base64.</p>
+      </div>
+      <div class="card">
+        <h3>Tests against the papers</h3>
+        <p>28 tests in four tiers (smoke, unit, regression,
+           <code>paper_values</code>). Every commit verifies the
+           published floors.</p>
+      </div>
+      <div class="card">
+        <h3>Audited data licences</h3>
+        <p>26 MIDI files under CC-BY 4.0, CC-BY-SA 3.0, US Public Domain,
+           and original CC0 contributions by the author.</p>
+      </div>
+      <div class="card">
+        <h3>Mexican copyright record</h3>
+        <p>Version v1.0.0 ready for INDAUTOR registration (RPDA-03 form),
+           with full dossier, SHA-256 manifest and authorship statement.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="try">
+  <div class="container">
+    <h2>Try it in your browser</h2>
+    <p>
+      No installation required. Open the applet, load the bundled BWV 1007
+      demo (the prelude of J. S. Bach's first cello suite), choose a prime
+      <span class="math">p</span> and watch the invariant
+      <span class="math">Coh<sub>π</sub>(2,n)</span> stay exactly at 0.500
+      across the whole tower — the architectural null floor.
+    </p>
+    <p>
+      <a class="btn primary" href="applet.html">Open the applet (English)</a>
+      &nbsp;
+      <a class="btn secondary" href="applet-es.html">Abrir en español</a>
+    </p>
+    <p style="font-size: 0.9rem; color: var(--muted);">
+      The applet runs entirely inside your browser. No network requests, no
+      cookies, no telemetry. Your MIDI file never leaves your computer.
+    </p>
+  </div>
+</section>
+
+<section class="block" id="install">
+  <div class="container">
+    <h2>Python package installation</h2>
+    <pre><code>git clone https://github.com/yoyontzin/padicmidi.git
+cd padicmidi
+python3 -m venv .venv && source .venv/bin/activate
+pip install -e .
+
+# Analyse the prelude of BWV 1007 with p=2:
+padicmidi-run-one data/midi/bwv1007-1.mid bwv1007_pre beats 2 \
+    --out results/bwv1007/p2
+
+cat results/bwv1007/p2/coherence_hier_p2.csv
+# n,Coh_pi,Coh_grid,n_samples_n,n_samples_nplus1
+# 1,0.5,0.5,1,2
+# 2,0.5,0.5,2,4
+# 3,0.5,0.5,4,8
+# ...</code></pre>
+
+    <h3>Programmatic usage</h3>
+    <pre><code>from padicmidi import run_hierarchical_from_midi
+
+result = run_hierarchical_from_midi(
+    midi_path="data/midi/bwv1007-1.mid",
+    p=2, axis="beats", nmax=5, seed=42,
+)
+for row in result["coherence"]:
+    print(row)</code></pre>
+
+    <p style="margin-top: 1rem;">
+      For bit-equivalent reproduction of the published CSVs, install the
+      pinned dependencies:
+    </p>
+    <pre><code>pip install -r requirements-pinned.txt</code></pre>
+  </div>
+</section>
+
+<section class="block" id="papers">
+  <div class="container">
+    <h2>Companion papers</h2>
+    <ul class="refs">
+      <li>
+        Pérez-Buendía, J. R. <em>Prime-power indexed multiscale graph
+        diagnostics for symbolic temporal data: methodological exploration
+        and delimitation via BWV 1007.</em>
+        <span class="meta">Submitted to <em>Journal of Mathematics and
+        Music</em> (Taylor &amp; Francis), 2026.</span>
+      </li>
+      <li>
+        Pérez-Buendía, J. R. <em>Profinite hierarchical patterns and
+        prime-indexed multiscale invariants in symbolic music.</em>
+        <span class="meta">Submitted, 2026.</span>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<section class="block" id="cite">
+  <div class="container">
+    <h2>How to cite</h2>
+    <p>If you use this software in a publication, please cite both the
+       package and the companion papers.</p>
+    <pre><code>@software{padicmidi2026,
+  author  = {P{\'e}rez-Buend{\'\i}a, J. Rogelio},
+  title   = {{PAdicMIDI}: A {P}ython Toolkit for Hierarchical,
+             Ultrametric, and p-adic Analysis of Symbolic Music Data},
+  version = {1.0.0},
+  year    = {2026},
+  url     = {https://github.com/yoyontzin/padicmidi}
+}</code></pre>
+  </div>
+</section>
+
+<section class="block" id="author">
+  <div class="container">
+    <h2>Author</h2>
+    <table class="kv">
+      <tr><td>Full legal name</td><td><strong>Jesús Rogelio Pérez Buendía</strong></td></tr>
+      <tr><td>Publication name</td><td>J. Rogelio Pérez-Buendía</td></tr>
+      <tr><td>Affiliation</td><td>SECIHTI — Centro de Investigación en Matemáticas (CIMAT), Mérida Unit</td></tr>
+      <tr><td>Group</td><td>P-ADAGIO — <em>P-adic Arithmetic, Dynamics And Galois-Informed Observations</em></td></tr>
+      <tr><td>ORCID</td><td><a href="https://orcid.org/0000-0002-7739-4779">0000-0002-7739-4779</a></td></tr>
+      <tr><td>Web</td><td><a href="https://www.cimat.mx/~rogelio.perez">www.cimat.mx/~rogelio.perez</a></td></tr>
+      <tr><td>Email</td><td><a href="mailto:rogelio@cimat.mx">rogelio@cimat.mx</a></td></tr>
+      <tr><td>Funding</td><td>SECIHTI Mexico, project CF-2019/217367</td></tr>
+    </table>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <p>
+      PAdicMIDI v1.0.0 · Code under
+      <a href="https://opensource.org/licenses/MIT">MIT licence</a> ·
+      Documentation under
+      <a href="https://creativecommons.org/licenses/by/4.0/">CC-BY 4.0</a> ·
+      Version registered with INDAUTOR Mexico (RPDA-03 form) ·
+      <a href="padicmidi.es.html">Español</a> ·
+      <a href="padicmidi.fr.html">Français</a>
+    </p>
+    <p>
+      © 2026 J. Rogelio Pérez-Buendía. All moral rights reserved under Mexican LFDA.
+    </p>
+  </div>
+</footer>
+
+</body>
+</html>

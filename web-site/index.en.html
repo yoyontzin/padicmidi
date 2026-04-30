@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Research software — J. Rogelio Pérez-Buendía (CIMAT-Mérida)</title>
+<meta name="description" content="Catalogue of research software by Dr. J. Rogelio Pérez-Buendía: applets, packages and computational tools for mathematical analysis with emphasis on p-adic and arithmetic-topological methods." />
+<meta name="author" content="J. Rogelio Pérez-Buendía" />
+<meta name="keywords" content="research software, p-adic, ultrametric analysis, MIDI, ATDA, P-ADAGIO, CIMAT, Pérez-Buendía" />
+<meta property="og:title" content="Research software — J. Rogelio Pérez-Buendía" />
+<meta property="og:description" content="Catalogue of research software: PAdicMIDI and associated projects." />
+<meta property="og:type" content="website" />
+<style>
+  :root {
+    --bg: #fbfbfd;
+    --fg: #1d1d1f;
+    --muted: #6e6e73;
+    --accent: #1d6f9f;
+    --accent-soft: #e7f1f7;
+    --accent-deep: #155a82;
+    --border: #d2d2d7;
+    --good: #2a7a3b;
+    --warn: #b25500;
+    --code-bg: #f4f4f7;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: var(--fg);
+    background: var(--bg);
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code { font-family: var(--mono); background: var(--code-bg); padding: 0.05em 0.35em; border-radius: 4px; font-size: 0.9em; }
+  .container { max-width: 920px; margin: 0 auto; padding: 0 1.2rem; }
+  .topbar {
+    background: rgba(255,255,255,0.9);
+    border-bottom: 1px solid var(--border);
+    padding: 0.7rem 0;
+    position: sticky; top: 0; z-index: 10;
+    backdrop-filter: saturate(180%) blur(20px);
+  }
+  .topbar .container { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; }
+  .brand { font-weight: 600; font-size: 1.05rem; }
+  .brand-sub { color: var(--muted); font-weight: 400; font-size: 0.85rem; margin-left: 0.4rem; }
+  .lang-switch { font-size: 0.88rem; }
+  .lang-switch a { padding: 0.3rem 0.7rem; border-radius: 6px; }
+  .lang-switch .active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  .hero { padding: 3.5rem 0 2rem; }
+  .hero h1 { font-family: var(--serif); font-size: clamp(2rem, 5vw, 2.8rem); font-weight: 600; margin: 0 0 0.6rem; letter-spacing: -0.02em; }
+  .hero .subtitle { font-size: 1.1rem; color: var(--muted); max-width: 700px; margin: 0 0 1rem; }
+  .hero .author-line { font-size: 0.95rem; color: var(--muted); }
+  .hero .author-line a { color: var(--accent); }
+  section.block { padding: 2.2rem 0; border-top: 1px solid var(--border); }
+  section.block h2 { font-family: var(--serif); font-size: 1.5rem; font-weight: 600; margin: 0 0 1rem; letter-spacing: -0.01em; }
+  section.block p { margin: 0 0 0.9rem; }
+  .project { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 1.4rem 1.5rem; margin: 1rem 0; transition: 0.15s; }
+  .project:hover { border-color: var(--accent); }
+  .project-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 0.4rem; }
+  .project-head h3 { font-family: var(--serif); font-size: 1.4rem; margin: 0; font-weight: 600; letter-spacing: -0.01em; }
+  .project-head .ver { font-family: var(--mono); font-size: 0.82rem; color: var(--muted); }
+  .badge { display: inline-block; font-size: 0.72rem; padding: 0.15rem 0.55rem; border-radius: 12px; font-weight: 600; letter-spacing: 0.02em; text-transform: uppercase; }
+  .badge.stable { background: #e2f2e6; color: var(--good); }
+  .badge.beta   { background: #fff1de; color: var(--warn); }
+  .badge.soon   { background: var(--code-bg); color: var(--muted); }
+  .project-desc { color: var(--fg); font-size: 0.96rem; margin: 0.5rem 0 1rem; }
+  .project-meta { display: grid; grid-template-columns: max-content 1fr; gap: 0.3rem 1rem; font-size: 0.86rem; color: var(--muted); margin-bottom: 1rem; align-items: baseline; }
+  .project-meta dt { font-weight: 500; color: var(--fg); }
+  .project-meta dd { margin: 0; }
+  .project-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.6rem; }
+  .btn { display: inline-block; padding: 0.55rem 1rem; border-radius: 7px; text-decoration: none; font-weight: 500; transition: 0.15s; border: 1px solid transparent; font-size: 0.9rem; }
+  .btn.primary { background: var(--accent); color: white; }
+  .btn.primary:hover { background: var(--accent-deep); text-decoration: none; }
+  .btn.secondary { background: white; color: var(--accent); border-color: var(--accent); }
+  .btn.secondary:hover { background: var(--accent-soft); text-decoration: none; }
+  .btn.muted { background: var(--code-bg); color: var(--fg); border-color: var(--border); }
+  .lang-pills { font-size: 0.8rem; color: var(--muted); }
+  .lang-pills .pill { display: inline-block; padding: 0.1rem 0.5rem; border-radius: 10px; background: var(--accent-soft); color: var(--accent); font-weight: 600; margin-left: 0.2rem; }
+  .placeholder { background: white; border: 1px dashed var(--border); border-radius: 12px; padding: 1.4rem 1.5rem; margin: 1rem 0; color: var(--muted); text-align: center; font-size: 0.95rem; }
+  table.kv { border-collapse: collapse; width: 100%; }
+  table.kv td { padding: 0.4rem 0.6rem; border-bottom: 1px solid var(--border); font-size: 0.93rem; }
+  table.kv td:first-child { color: var(--muted); width: 30%; }
+  footer { background: white; border-top: 1px solid var(--border); padding: 1.6rem 0; color: var(--muted); font-size: 0.85rem; text-align: center; }
+  footer a { color: var(--muted); text-decoration: underline; }
+  .math { font-family: "Cambria Math", "STIX Two Math", "Latin Modern Math", serif; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="container">
+    <div class="brand">
+      Research software
+      <span class="brand-sub">J. R. Pérez-Buendía · CIMAT-Mérida</span>
+    </div>
+    <div class="lang-switch">
+      <a href="index.es.html">ES</a>
+      <a href="index.en.html" class="active">EN</a>
+      <a href="index.fr.html">FR</a>
+    </div>
+  </div>
+</div>
+
+<header class="hero">
+  <div class="container">
+    <h1>Research software</h1>
+    <p class="subtitle">
+      Catalogue of software, applets and computational tools produced in the
+      <strong>P-ADAGIO</strong> group (CIMAT-Mérida) to accompany research on
+      <em>p</em>-adic, ultrametric and arithmetic-topological methods. All
+      code is released under the MIT licence; the documentation is licensed
+      under CC-BY 4.0.
+    </p>
+    <p class="author-line">
+      Dr. <strong>J. Rogelio Pérez-Buendía</strong> ·
+      <a href="https://orcid.org/0000-0002-7739-4779">ORCID 0000-0002-7739-4779</a> ·
+      <a href="https://www.cimat.mx/~rogelio.perez">www.cimat.mx/~rogelio.perez</a>
+    </p>
+  </div>
+</header>
+
+<section class="block">
+  <div class="container">
+    <h2>Available programs</h2>
+
+    <article class="project">
+      <div class="project-head">
+        <h3>PAdicMIDI</h3>
+        <span class="ver">v1.0.0 · 2026-04</span>
+        <span class="badge stable">Stable</span>
+      </div>
+      <p class="project-desc">
+        <em>A Python Toolkit for Hierarchical, Ultrametric, and p-adic
+        Analysis of Symbolic Music Data.</em>
+        Builds a p-adic tower of pattern spaces over a Standard MIDI file
+        and computes the coherence invariant
+        <span class="math">Coh<sub>π</sub>(p,n)</span>, comparing it
+        against the architectural null floor <span class="math">1/p</span>.
+        Includes a self-contained HTML applet (zero network) with four
+        interactive musical views, and a Python package with five CLI
+        sub-commands.
+      </p>
+      <dl class="project-meta">
+        <dt>Version</dt><dd>1.0.0 (INDAUTOR / RPDA-03 registration in progress)</dd>
+        <dt>Licences</dt><dd>Code MIT · Documentation CC-BY 4.0 · Audited data (CC-BY, CC-BY-SA, US public domain, CC0)</dd>
+        <dt>Implementation</dt><dd>Python 3.10+ (1809 + 417 lines) · Vanilla ES2020 JavaScript (applet ≈ 55 KB)</dd>
+        <dt>Reproducibility</dt><dd>28 automatic tests · published values verified bit-equivalent on macOS arm64</dd>
+        <dt>Key dependencies</dt><dd><code>numpy</code>, <code>scipy</code>, <code>networkx</code>, <code>mido</code>, <code>matplotlib</code></dd>
+        <dt>Languages</dt>
+        <dd>
+          <span class="lang-pills">
+            Applet:<span class="pill">EN</span><span class="pill">ES</span><span class="pill" title="planned">FR (soon)</span>
+            ·
+            Documentation:<span class="pill">EN</span><span class="pill">ES</span>
+          </span>
+        </dd>
+      </dl>
+      <div class="project-actions">
+        <a class="btn primary"   href="padicmidi.en.html">View details</a>
+        <a class="btn secondary" href="applet.html">Open the applet (EN)</a>
+        <a class="btn secondary" href="applet-es.html">Abrir el applet (ES)</a>
+      </div>
+    </article>
+
+    <div class="placeholder">
+      <strong>More programs in preparation.</strong> This section will grow
+      as further components of the ATDA framework are released:
+      <em>p</em>-adic gene-regulatory-network modules, inverse-system
+      visualisation tools, and a multiscale-hierarchy experiment planner.
+    </div>
+  </div>
+</section>
+
+<section class="block" id="about">
+  <div class="container">
+    <h2>About the author</h2>
+    <table class="kv">
+      <tr><td>Full legal name</td><td><strong>Jesús Rogelio Pérez Buendía</strong></td></tr>
+      <tr><td>Publication name</td><td>J. Rogelio Pérez-Buendía</td></tr>
+      <tr><td>Affiliation</td><td>SECIHTI — Centro de Investigación en Matemáticas (CIMAT), Unit Mérida</td></tr>
+      <tr><td>Group</td><td>P-ADAGIO — <em>P-adic Arithmetic, Dynamics And Galois-Informed Observations</em></td></tr>
+      <tr><td>ORCID</td><td><a href="https://orcid.org/0000-0002-7739-4779">0000-0002-7739-4779</a></td></tr>
+      <tr><td>Personal page</td><td><a href="https://www.cimat.mx/~rogelio.perez">www.cimat.mx/~rogelio.perez</a></td></tr>
+      <tr><td>Email</td><td><a href="mailto:rogelio@cimat.mx">rogelio@cimat.mx</a></td></tr>
+      <tr><td>Funding</td><td>SECIHTI Mexico · Project CF-2019/217367</td></tr>
+    </table>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <p>
+      © 2026 J. Rogelio Pérez-Buendía. All moral rights reserved under the
+      LFDA. This site uses no cookies, collects no data and contains no
+      telemetry.
+    </p>
+    <p>
+      <a href="index.es.html">Español</a> ·
+      <a href="index.fr.html">Français</a>
+    </p>
+  </div>
+</footer>
+
+</body>
+</html>

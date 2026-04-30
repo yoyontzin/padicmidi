@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Research software · Logiciels de recherche · Desarrollo tecnológico — J. R. Pérez-Buendía</title>
+<meta name="description" content="J. Rogelio Pérez-Buendía (CIMAT-Mérida) — research software in Spanish, English and French." />
+<meta name="author" content="J. Rogelio Pérez-Buendía" />
+<!-- Fallback for users without JavaScript: send to English HUB after 2 s. -->
+<noscript><meta http-equiv="refresh" content="2; url=index.en.html" /></noscript>
+<script>
+  // Detect navigator language and redirect to the matching HUB.
+  // The visual selector below stays as a fallback.
+  (function () {
+    try {
+      var lang = (navigator.language || navigator.userLanguage || "en")
+                   .toLowerCase().split("-")[0];
+      var target = "index.en.html";
+      if (lang === "es") target = "index.es.html";
+      else if (lang === "fr") target = "index.fr.html";
+      // Do not redirect if the user explicitly opened ?nolang to keep the splash.
+      if (location.search.indexOf("nolang") === -1) {
+        location.replace(target);
+      }
+    } catch (e) { /* fall through to manual selector */ }
+  })();
+</script>
+<style>
+  :root {
+    --bg: #fbfbfd;
+    --fg: #1d1d1f;
+    --muted: #6e6e73;
+    --accent: #1d6f9f;
+    --accent-soft: #e7f1f7;
+    --accent-deep: #155a82;
+    --border: #d2d2d7;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: var(--fg);
+    background: var(--bg);
+    padding: 1rem;
+  }
+  .splash {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 2.4rem 2.6rem;
+    max-width: 520px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .splash h1 {
+    font-family: var(--serif);
+    font-size: 1.6rem;
+    font-weight: 600;
+    margin: 0 0 0.4rem;
+    letter-spacing: -0.01em;
+  }
+  .splash .subtitle { color: var(--muted); font-size: 1rem; margin: 0 0 1.6rem; }
+  .splash .langs { display: flex; flex-direction: column; gap: 0.55rem; }
+  .splash .langs a {
+    display: block;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    text-decoration: none;
+    color: var(--fg);
+    transition: 0.15s;
+    background: white;
+    font-size: 0.96rem;
+  }
+  .splash .langs a:hover {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .splash .langs .lab {
+    color: var(--muted);
+    font-size: 0.82rem;
+    margin-left: 0.3rem;
+  }
+  .splash .meta {
+    color: var(--muted);
+    font-size: 0.8rem;
+    margin-top: 1.6rem;
+    line-height: 1.5;
+  }
+  .splash .meta a { color: var(--muted); text-decoration: underline; }
+</style>
+</head>
+<body>
+  <div class="splash">
+    <h1>Desarrollo tecnológico</h1>
+    <p class="subtitle">
+      J. Rogelio Pérez-Buendía · CIMAT-Mérida
+    </p>
+    <div class="langs">
+      <a href="index.es.html" lang="es">
+        <strong>Español</strong> <span class="lab">— continuar en español</span>
+      </a>
+      <a href="index.en.html" lang="en">
+        <strong>English</strong> <span class="lab">— continue in English</span>
+      </a>
+      <a href="index.fr.html" lang="fr">
+        <strong>Français</strong> <span class="lab">— continuer en français</span>
+      </a>
+    </div>
+    <p class="meta">
+      Si tu navegador detecta automáticamente el idioma, serás redirigido en
+      un instante.<br />
+      If your browser auto-detects the language, you will be redirected
+      shortly.<br />
+      Si votre navigateur détecte automatiquement la langue, vous serez
+      redirigé sous peu.
+    </p>
+  </div>
+</body>
+</html>

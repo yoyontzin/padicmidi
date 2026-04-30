@@ -1,0 +1,2855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PAdicMIDI — offline applet</title>
+<meta name="description" content="Self-contained offline applet that computes the p-adic coherence invariant Coh_pi(p,n) on a Standard MIDI file." />
+<meta name="author" content="J. Rogelio Pérez-Buendía (CIMAT-Mérida)" />
+<style>
+  :root {
+    --bg: #fafafa;
+    --fg: #1d1d1f;
+    --muted: #6e6e73;
+    --accent: #1d6f9f;
+    --accent-soft: #e7f1f7;
+    --border: #d2d2d7;
+    --good: #2a7a3b;
+    --warn: #b25500;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 1.5rem;
+    font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: var(--fg);
+    background: var(--bg);
+  }
+  header { max-width: 980px; margin: 0 auto 1.2rem; }
+  h1 { margin: 0 0 0.2rem; font-size: 1.4rem; }
+  h2 { font-size: 1.05rem; margin: 1.4rem 0 0.6rem; }
+  .subtitle { color: var(--muted); margin-bottom: 0.4rem; }
+  .meta { color: var(--muted); font-size: 0.85rem; }
+  main { max-width: 980px; margin: 0 auto; }
+  .panel {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: white;
+    padding: 1rem 1.1rem;
+    margin-bottom: 1rem;
+  }
+  .row { display: flex; flex-wrap: wrap; gap: 0.8rem; align-items: center; }
+  .row > * { flex: 0 0 auto; }
+  label { font-weight: 500; }
+  select, input[type="number"], button, .btn {
+    font: inherit;
+    padding: 0.4rem 0.7rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: white;
+    color: var(--fg);
+    cursor: pointer;
+  }
+  button.primary, .btn.primary {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+  }
+  button.primary:hover { background: #155a82; }
+  .drop {
+    border: 2px dashed var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+    color: var(--muted);
+    background: #f4f7fa;
+    transition: 0.15s;
+  }
+  .drop.over { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+  table { border-collapse: collapse; width: 100%; font-family: var(--mono); font-size: 0.92rem; }
+  th, td { padding: 0.35rem 0.55rem; text-align: right; border-bottom: 1px solid var(--border); }
+  th:first-child, td:first-child { text-align: left; }
+  th { background: #f1f3f5; }
+  .pill { display: inline-block; padding: 0.1rem 0.55rem; border-radius: 12px; background: var(--accent-soft); color: var(--accent); font-size: 0.78rem; }
+  .pill.good { background: #e2f2e6; color: var(--good); }
+  .pill.warn { background: #fff1de; color: var(--warn); }
+  pre, code { font-family: var(--mono); font-size: 0.88rem; }
+  .floor-line { stroke: var(--accent); stroke-width: 1; stroke-dasharray: 4 4; fill: none; }
+  .tree-edge { stroke: #999; stroke-width: 0.7; fill: none; opacity: 0.65; }
+  .tree-node { fill: var(--accent); stroke: white; stroke-width: 0.5; }
+  .tree-leaf { fill: var(--accent-soft); stroke: var(--accent); }
+  footer { color: var(--muted); font-size: 0.8rem; margin-top: 1rem; text-align: center; }
+  .small { font-size: 0.85rem; color: var(--muted); }
+  details summary { cursor: pointer; font-weight: 500; color: var(--accent); }
+  /* --- introduction panel (step 0) --- */
+  .intro-grid {
+    display: grid;
+    gap: 0.9rem;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    margin: 0.5rem 0 0.8rem;
+  }
+  .intro-card {
+    background: var(--accent-soft);
+    border: 1px solid #cfe1ec;
+    border-radius: 7px;
+    padding: 0.7rem 0.85rem;
+  }
+  .intro-card h4 {
+    margin: 0 0 0.35rem; font-size: 0.92rem;
+    color: var(--accent); font-weight: 600;
+  }
+  .intro-card p, .intro-card ul {
+    margin: 0; font-size: 0.86rem; color: var(--fg);
+  }
+  .intro-card ul { padding-left: 1.1rem; }
+  .intro-card li { margin: 0.15rem 0; }
+  .expectations {
+    border-collapse: collapse; width: 100%;
+    margin: 0.4rem 0 0.6rem; font-size: 0.84rem;
+    font-family: inherit;
+  }
+  .expectations th, .expectations td {
+    padding: 0.35rem 0.55rem; text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  .expectations th {
+    background: #f7f8fa; color: var(--muted);
+    font-weight: 600; font-size: 0.78rem;
+    text-transform: uppercase; letter-spacing: 0.02em;
+  }
+  .expectations td.num {
+    font-family: var(--mono); text-align: right;
+  }
+  .ref-list {
+    list-style: none; padding: 0; margin: 0.3rem 0 0;
+    font-size: 0.86rem;
+  }
+  .ref-list li {
+    padding: 0.45rem 0; border-bottom: 1px solid var(--border);
+  }
+  .ref-list li:last-child { border-bottom: none; }
+  .ref-list .ref-num {
+    display: inline-block; width: 1.6rem;
+    color: var(--muted); font-family: var(--mono);
+  }
+  /* --- result header (clear identification of each run) --- */
+  .result-header {
+    background: #f4f9ff;
+    border: 1px solid #b8d4ee;
+    border-left: 4px solid var(--accent, #2476d6);
+    border-radius: 6px;
+    padding: 0.55rem 0.75rem;
+    margin: 0.3rem 0 0.7rem;
+    font-size: 0.86rem;
+    line-height: 1.45;
+  }
+  .result-header .rh-title {
+    font-weight: 600; color: var(--accent, #2476d6);
+    font-size: 0.78rem; text-transform: uppercase;
+    letter-spacing: 0.04em; margin-bottom: 0.2rem;
+  }
+  .result-header .rh-file {
+    font-family: var(--mono); font-weight: 600;
+    color: #1a1a1a;
+  }
+  .result-header .rh-meta {
+    color: var(--muted); font-size: 0.82rem;
+    margin-top: 0.15rem;
+  }
+  .result-header .rh-fingerprint {
+    font-family: var(--mono); font-size: 0.75rem;
+    color: var(--muted); margin-top: 0.2rem;
+  }
+  .floor-note {
+    background: #fff8e6; border: 1px solid #f0d590;
+    border-radius: 6px; padding: 0.55rem 0.75rem;
+    margin: 0 0 0.7rem; font-size: 0.85rem;
+    line-height: 1.45;
+  }
+  .floor-note strong { color: #8a5a00; }
+  /* --- diag panel (p-arity) --- */
+  .diag-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 0.7rem;
+  }
+  .diag-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.5rem 0.6rem 0.4rem;
+  }
+  .diag-card h4 {
+    margin: 0 0 0.15rem; font-size: 0.83rem;
+    font-weight: 600; color: #1a1a1a;
+  }
+  .diag-card .diag-sub {
+    font-size: 0.72rem; color: var(--muted); margin-bottom: 0.3rem;
+  }
+  .diag-card svg { display: block; width: 100%; height: auto; }
+  .diag-legend {
+    display: flex; gap: 0.7rem; align-items: center;
+    margin-bottom: 0.45rem; font-size: 0.78rem;
+  }
+  .diag-legend .lg-dot {
+    display: inline-block; width: 10px; height: 10px;
+    border-radius: 50%; margin-right: 4px; vertical-align: middle;
+  }
+  /* --- musical visualisations --- */
+  .vis-block { margin-top: 1.1rem; }
+  .vis-title {
+    font-size: 0.95rem; font-weight: 600;
+    color: var(--fg); margin: 0 0 0.3rem;
+  }
+  .vis-caption {
+    font-size: 0.82rem; color: var(--muted);
+    margin: 0.1rem 0 0.5rem;
+  }
+  .vis-canvas-wrap {
+    border: 1px solid var(--border); border-radius: 6px;
+    background: white; padding: 0.4rem; overflow-x: auto;
+  }
+  .vis-canvas-wrap canvas { display: block; image-rendering: pixelated; }
+  .vis-row {
+    display: flex; flex-wrap: wrap; gap: 0.6rem;
+    align-items: flex-start; margin-top: 0.4rem;
+  }
+  .level-selector {
+    display: inline-flex; gap: 0.3rem; flex-wrap: wrap;
+    margin-bottom: 0.5rem;
+  }
+  .level-selector button {
+    padding: 0.18rem 0.55rem; font-size: 0.82rem;
+    border-radius: 4px; background: white;
+    border: 1px solid var(--border); cursor: pointer;
+  }
+  .level-selector button.active {
+    background: var(--accent); color: white; border-color: var(--accent);
+  }
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 0.35rem 0.7rem;
+    font-size: 0.78rem; color: var(--fg);
+    margin: 0.4rem 0 0.2rem;
+  }
+  .legend-swatch {
+    display: inline-block; width: 11px; height: 11px;
+    border-radius: 2px; margin-right: 0.3rem;
+    vertical-align: -1px; border: 1px solid rgba(0,0,0,0.08);
+  }
+  .pitch-axis {
+    font-family: var(--mono); font-size: 9px;
+    fill: var(--muted);
+  }
+  .proto-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 0.55rem; margin-top: 0.4rem;
+  }
+  .proto-card {
+    border: 1px solid var(--border); border-radius: 5px;
+    padding: 0.35rem; background: white;
+    font-size: 0.78rem; color: var(--fg);
+    display: flex; flex-direction: column; gap: 0.25rem;
+  }
+  .proto-card .proto-tag {
+    display: flex; align-items: center; gap: 0.3rem;
+    font-weight: 600;
+  }
+  .proto-card .proto-tag .swatch {
+    width: 12px; height: 12px; border-radius: 3px;
+    border: 1px solid rgba(0,0,0,0.1);
+  }
+  .proto-card .proto-meta {
+    color: var(--muted); font-size: 0.74rem;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>PAdicMIDI — offline applet</h1>
+  <div class="subtitle">
+    Hierarchical, ultrametric and <em>p</em>-adic analysis of symbolic music.
+    Drop in a Standard MIDI file, choose a prime, read the coherence invariant.
+  </div>
+  <div class="meta">
+    Self-contained <code>applet.html</code> · v1.0.0 · MIT licence ·
+    Author: J. Rogelio Pérez-Buendía (CIMAT-Mérida).
+    <span class="pill">runs entirely in your browser, no network</span>
+    · <a href="applet-es.html" style="color: var(--accent);">Versión en español</a>
+  </div>
+</header>
+
+<main>
+  <section class="panel">
+    <h2>0. Before you start — instructions and references</h2>
+
+    <div class="intro-grid">
+      <div class="intro-card">
+        <h4>What files can I upload?</h4>
+        <ul>
+          <li><strong>Standard MIDI files</strong> (<code>.mid</code> or
+              <code>.midi</code>), formats 0 or 1.</li>
+          <li>Recommended: 100 – 4 000 notes, duration 30 s – 10 min.</li>
+          <li>The in-browser engine treats all tracks as a
+              <em>quasi-monophonic stream</em>; for rigorous polyphonic
+              analysis use the Python package.</li>
+          <li>Not supported: SMPTE division, MIDI type 2, encrypted
+              files, audio (WAV/MP3).</li>
+        </ul>
+      </div>
+
+      <div class="intro-card">
+        <h4>What does the applet do with your MIDI?</h4>
+        <ol style="padding-left: 1.1rem; margin: 0; font-size: 0.86rem;">
+          <li>Parses the notes and builds a 12-D chromagram (pitch
+              classes) on a beat-synchronous grid with bin
+              <code>Δ<sub>b</sub> = 1/12</code>.</li>
+          <li>Quantises windows of length <code>p<sup>n</sup></code>
+              by <em>k</em>-means at each level <em>n</em>.</li>
+          <li>Builds the tower
+              <code>S<sub>1</sub> → … → S<sub>N<sub>max</sub></sub></code>
+              with forced inverse system <code>π<sub>n+1,n</sub></code>.</li>
+          <li>Computes the coherence invariant
+              <code>Coh<sub>π</sub>(p,n)</code> and compares it against
+              the architectural floor <code>1/p</code>.</li>
+        </ol>
+      </div>
+
+      <div class="intro-card">
+        <h4>What results will you see?</h4>
+        <ul>
+          <li>A table with <code>Coh<sub>π</sub>(p,n)</code>, the floor
+              <code>1/p</code> and a status badge.</li>
+          <li>Four musical views: temporal chromagram with prototype
+              segmentation, prototype catalogue, inverse system π and
+              the full p-adic tree.</li>
+          <li>CSV download of the values.</li>
+        </ul>
+      </div>
+
+      <div class="intro-card">
+        <h4>Privacy</h4>
+        <p>
+          Your MIDI file <strong>never leaves your browser</strong>.
+          The applet makes no network requests, uses no cookies and
+          sends no telemetry. You can save this HTML and run it fully
+          offline.
+        </p>
+      </div>
+    </div>
+
+    <details open>
+      <summary>What to expect as a diagnosis (with examples)</summary>
+      <p class="small" style="margin-top: 0.5rem;">
+        When a piece satisfies the structural hypotheses
+        <strong>(SC)</strong> sibling-cover and <strong>(AI)</strong>
+        ancestor-inclusion and one chooses <em>r&nbsp;=&nbsp;p</em>,
+        <strong>Proposition&nbsp;3.1</strong> of paper&nbsp;[2] predicts
+        <code>Coh<sub>π</sub>(p,n) = 1/p</code> <em>exactly</em> for all
+        <em>n</em> (the architectural null floor). Deviations above the
+        floor are the quantitative fingerprint of polyphonic texture or
+        non-canonical metric structure.
+      </p>
+      <table class="expectations">
+        <thead>
+          <tr>
+            <th>Reference piece</th>
+            <th>p</th>
+            <th>Expected outcome</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>BWV 1007 — prelude (monophonic, bundled demo)</td>
+            <td class="num">2</td>
+            <td><code>Coh<sub>π</sub>(2,n) = 0.500000</code> exactly at
+                every level. The badge should read <em>on floor</em>.</td>
+          </tr>
+          <tr>
+            <td>BWV 1007 — prelude</td>
+            <td class="num">3</td>
+            <td>Range <code>[0.67, 0.999]</code> above the floor
+                <code>1/3 ≈ 0.333</code>. Difference explained by
+                <em>r ≠ p</em>: the binary content does not align with
+                the ternary grid.</td>
+          </tr>
+          <tr>
+            <td>Polyphonic Bach (BWV 1049, 1050, 1079)</td>
+            <td class="num">2</td>
+            <td>Measurable deviation from the floor:
+                <code>Coh<sub>π</sub></code> typically between 0.55 and
+                0.95 depending on the movement. This is the
+                <em>texture discriminant</em> reported in [2].</td>
+          </tr>
+          <tr>
+            <td>Any piece, high levels with a small corpus</td>
+            <td class="num">—</td>
+            <td>If <code>|S<sub>n+1</sub>|</code> is very small the
+                value loses statistical stability — interpret with
+                caution.</td>
+          </tr>
+        </tbody>
+      </table>
+    </details>
+
+    <h3 style="font-size: 0.95rem; margin: 1rem 0 0.3rem;">Key references</h3>
+    <ul class="ref-list">
+      <li>
+        <span class="ref-num">[1]</span>
+        Pérez-Buendía, J.&nbsp;R. (2026).
+        <em>Prime-power indexed multiscale graph diagnostics for symbolic
+        temporal data: methodological exploration and delimitation via
+        BWV&nbsp;1007.</em>
+        Submitted to the <em>Journal of Mathematics and Music</em>
+        (Taylor &amp; Francis). Defines the descriptors
+        <code>β<sub>0</sub></code>, <code>D</code>,
+        <code>β<sub>0</sub><sup>spec</sup></code> and the diagnostic
+        methodology that motivates this software.
+      </li>
+      <li>
+        <span class="ref-num">[2]</span>
+        Pérez-Buendía, J.&nbsp;R. (2026).
+        <em>Profinite hierarchical patterns and prime-indexed multiscale
+        invariants in symbolic music.</em>
+        Submitted. Introduces the p-adic tower
+        <code>D<sub>p,n</sub></code>, the inverse system
+        <code>π<sub>n+1,n</sub></code>, the invariant
+        <code>Coh<sub>π</sub>(p,n)</code> and proves
+        <strong>Proposition&nbsp;3.1</strong> of the
+        <code>1/p</code> floor.
+      </li>
+      <li>
+        <span class="ref-num">[3]</span>
+        Serre, J.-P. (1979).
+        <em>Local Fields.</em> Springer GTM&nbsp;67, ch.&nbsp;1, §3.
+        Theoretical support for the convergence of pushforward measures
+        on <code>ℤ<sub>p</sub></code>.
+      </li>
+    </ul>
+
+    <p class="small" style="margin: 0.6rem 0 0;">
+      <strong>Start with the demo:</strong> click
+      <em>Load BWV&nbsp;1007 demo</em> below, keep the default parameters
+      (<em>p</em>=2, N<sub>max</sub>=4) and run the analysis; you should
+      see three rows with <code>Coh<sub>π</sub> = 0.500000</code>. Then
+      try <em>p</em>=3 on the same file to observe the contrast.
+    </p>
+  </section>
+
+  <section class="panel">
+    <h2>1. Load a MIDI file or a demo</h2>
+    <p class="small" style="margin-top: 0;">
+      Upload your own MIDI, drop it onto the box below, or start
+      with one of the four bundled demos. Demos are useful to see
+      what the theory predicts for known structures.
+    </p>
+    <div class="row" style="margin-bottom: 0.5rem;">
+      <input type="file" id="fileInput" accept=".mid,.midi,audio/midi" />
+      <span id="loadedInfo" class="small"></span>
+    </div>
+    <div class="row" style="margin-bottom: 0.7rem; gap: 0.4rem;">
+      <button class="btn primary" id="demoBtn" type="button"
+              title="Prelude from Bach's Cello Suite no. 1 (monophonic, public domain via Mutopia).">
+        BWV 1007 — prelude (Bach, mono)
+      </button>
+      <button class="btn" id="demoBin" type="button"
+              title="Synthetic MIDI from the project, designed to satisfy (SC) and (AI) at p=2.">
+        Toy binary (synthetic, p=2)
+      </button>
+      <button class="btn" id="demoTer" type="button"
+              title="Synthetic MIDI from the project, designed to satisfy (SC) and (AI) at p=3.">
+        Toy ternary (synthetic, p=3)
+      </button>
+      <button class="btn" id="demoRng" type="button"
+              title="Crab canon from the Musical Offering (BWV 1079), polyphonic, public domain.">
+        BWV 1079 — Crab canon (Bach, poly.)
+      </button>
+    </div>
+    <details>
+      <summary>Expected results per demo (with K=8, N<sub>max</sub>=4, seed 42)</summary>
+      <table class="expectations">
+        <thead>
+          <tr>
+            <th>Demo</th>
+            <th>Coh<sub>π</sub>(2,·)</th>
+            <th>Coh<sub>π</sub>(3,·)</th>
+            <th>Reading</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>BWV 1007 — prelude (mono Bach)</td>
+            <td class="num">[0.500, 0.500, 0.500]<br><span class="small">floor 0.500</span></td>
+            <td class="num">[1.00, 1.00, 0.54]<br><span class="small">floor 0.333</span></td>
+            <td>The paper's canonical case. Binary cello pulse puts
+                <em>p</em>=2 exactly on the floor. With <em>p</em>=3
+                the invariant saturates: there is no ternary
+                alignment.</td>
+          </tr>
+          <tr>
+            <td>Toy binary (synthetic, p=2)</td>
+            <td class="num">[0.500, 0.500, 0.500]<br><span class="small">floor 0.500</span></td>
+            <td class="num">[0.44, 0.56, 0.35]<br><span class="small">floor 0.333</span></td>
+            <td>Designed to satisfy (SC) and (AI) at <em>p</em>=2.
+                Hits the floor for <em>p</em>=2; fluctuates near
+                the ternary floor.</td>
+          </tr>
+          <tr>
+            <td>Toy ternary (synthetic, p=3)</td>
+            <td class="num">[0.25, 0.50, 0.50]<br><span class="small">floor 0.500</span></td>
+            <td class="num">[0.333, 0.41, 0.27]<br><span class="small">floor 0.333</span></td>
+            <td>Designed to satisfy (SC) and (AI) at <em>p</em>=3.
+                The binary view is atypical (n=1 dips below). With
+                <em>p</em>=3 level 1 hits the floor 1/3 exactly.</td>
+          </tr>
+          <tr>
+            <td>BWV 1079 — Crab canon (polyphonic)</td>
+            <td class="num">[0.500, 0.500, 0.500]<br><span class="small">floor 0.500</span></td>
+            <td class="num">[1.00, 0.96, 0.81]<br><span class="small">floor 0.333</span></td>
+            <td>Real polyphony with two voices in retrograde
+                imitation. Strict binary structure. Same qualitative
+                profile as BWV 1007.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="small" style="margin: 0.5rem 0 0;">
+        To reproduce the values: load the demo, set <em>p</em>=2 (or 3),
+        click <em>Run analysis</em>. Magnitudes can shift slightly with
+        K and seed; the qualitative pattern (on-floor vs off-floor)
+        does not. The column shows levels n=1, 2, 3.
+      </p>
+    </details>
+    <div id="dropZone" class="drop" style="margin-top: 0.6rem;">
+      Drop a <code>.mid</code> file here.
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>2. Parameters</h2>
+    <div class="row">
+      <label>Prime <em>p</em>
+        <select id="paramP">
+          <option value="2" selected>2 (binary)</option>
+          <option value="3">3 (ternary)</option>
+        </select>
+      </label>
+      <label>N<sub>max</sub>
+        <select id="paramNmax">
+          <option value="3">3</option>
+          <option value="4" selected>4</option>
+          <option value="5">5</option>
+        </select>
+      </label>
+      <label>K
+        <input type="number" id="paramK" value="8" min="2" max="32" />
+      </label>
+      <label title="Children per parent in the tree; ideal = p for a faithful p-adic tower. Auto-syncs with p unless you edit it manually.">K<sub>child</sub>
+        <input type="number" id="paramKchild" value="2" min="2" max="6" />
+      </label>
+      <label>seed
+        <input type="number" id="paramSeed" value="42" min="0" max="999999" />
+      </label>
+      <button class="btn primary" id="runBtn" type="button" disabled>Run analysis</button>
+      <button class="btn" id="diagBtn" type="button" disabled
+              title="Compute the kNN-graph spectral invariants for p=2 and p=3 (Paper 1 figures).">
+        p-arity diagnostic (β₀, λ₂…)
+      </button>
+      <button class="btn" id="resetBtn" type="button"
+              title="Clear loaded file and results, and restart the session.">
+        Reset
+      </button>
+      <span id="runStatus" class="small"></span>
+    </div>
+    <p class="small" style="margin-top: 0.6rem;">
+      Defaults reproduce the gold-standard runs of the companion papers (J. R. Pérez-Buendía, 2026)
+      with the proviso that the in-browser implementation uses a simplified MIDI parser limited to
+      monophonic flows; for full reproducibility use the Python package.
+    </p>
+  </section>
+
+  <section class="panel" id="resultsPanel" style="display:none;">
+    <h2>3. Coherence table</h2>
+    <div id="resultHeader" class="result-header" aria-live="polite"></div>
+    <div id="floorNote" class="floor-note" style="display:none;"></div>
+    <table id="cohTable">
+      <thead>
+        <tr><th>n</th><th>Coh<sub>π</sub>(p,n)</th><th>1/p</th><th>|S<sub>n</sub>|</th><th>|S<sub>n+1</sub>|</th><th>status</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <div class="row" style="margin-top: 0.8rem;">
+      <button id="downloadCsv" class="btn">Download CSV</button>
+      <span id="cohSummary" class="small"></span>
+    </div>
+
+    <h2>4. Musical visualisations</h2>
+    <p class="small" style="margin-top: 0;">
+      These views show <em>what</em> the method is actually looking at inside
+      the piece, not just the abstract tree. Use the buttons below to pick a
+      level <em>n</em> and inspect how the piece is segmented and which
+      prototypes dominate.
+    </p>
+
+    <div class="level-selector" id="levelSelector"></div>
+
+    <div class="vis-block" id="audioBlock">
+      <div class="vis-title">4.0 Player — listen to what is being analysed</div>
+      <div class="vis-caption">
+        Basic WebAudio synthesiser (triangle wave + decay envelope)
+        that plays the loaded MIDI fully offline. Use it to relate
+        what you <em>hear</em> with what you <em>see</em> on the
+        chromogram in panel 4.1: pressing <em>Play</em> draws a red
+        cursor that scrolls over the chromogram. Clicking directly on
+        the chromogram seeks the player to that position.
+      </div>
+      <div class="row" style="gap:0.5rem; align-items:center; flex-wrap:wrap; margin-top:0.5rem;">
+        <button id="audioPlay" class="btn primary" type="button" disabled>▶ Play</button>
+        <button id="audioPause" class="btn" type="button" disabled>❚❚ Pause</button>
+        <button id="audioStop" class="btn" type="button" disabled>■ Stop</button>
+        <span id="audioTime" class="small" style="min-width:120px;">0.00 / 0.00 s</span>
+        <input type="range" id="audioSeek" min="0" max="1000" value="0"
+               style="flex:1;min-width:240px;" disabled />
+        <label class="small" style="display:flex;align-items:center;gap:4px;">
+          Vol
+          <input type="range" id="audioVol" min="0" max="100" value="60" style="width:90px;">
+        </label>
+      </div>
+      <div class="small" id="audioStatus" style="margin-top:0.4rem;color:#666;"></div>
+    </div>
+
+    <div class="vis-block">
+      <div class="vis-title">4.1 The piece coloured by prototype</div>
+      <div class="vis-caption">
+        Chromagram across time (width = number of beat bins of size 1/12;
+        height = 12 pitch classes, C at the bottom, B at the top). Blue
+        intensity encodes chromatic activation. The bottom band assigns each
+        window of length <code>p<sup>n</sup></code> the colour of the
+        prototype that quantises it (this is the <em>temporal fingerprint</em>
+        of level n). Colour changes mark musically meaningful transitions.
+      </div>
+      <div class="vis-canvas-wrap">
+        <canvas id="canvasTimeline" width="900" height="220"></canvas>
+      </div>
+      <div class="legend" id="timelineLegend"></div>
+    </div>
+
+    <div class="vis-block">
+      <div class="vis-title">4.2 Catalogue of prototypes at this level</div>
+      <div class="vis-caption">
+        Each card is a <em>prototype</em>: a typical chromatic pattern of
+        length <code>p<sup>n</sup></code> extracted as the centroid of the
+        windows assigned to it. Rows = 12 pitch classes (C bottom, B top);
+        columns = time positions inside the prototype. Intensity encodes
+        chromatic activation. <strong>The card colour matches the temporal
+        band in 4.1</strong>, so you can read where each pattern occurs in
+        the piece.
+      </div>
+      <div class="proto-grid" id="protoGrid"></div>
+    </div>
+
+    <div class="vis-block">
+      <div class="vis-title">4.3 Inverse system π — flow of windows between levels</div>
+      <div class="vis-caption">
+        Diagram of the forced inverse system
+        <code>π<sub>n+1, n</sub>: S<sub>n+1</sub> → S<sub>n</sub></code>.
+        <strong>Block heights and edge widths are proportional to the
+        number of real windows</strong> falling on each prototype
+        (label <code>P<em>i</em>·<em>k</em></code>: prototype <em>i</em>,
+        <em>k</em> windows). Barely visible blocks = prototypes that
+        are almost unused; thick bands = branches that concentrate
+        traffic. When the piece satisfies (SC)+(AI) of Paper 2, the
+        parent quantiser classifies consistently with this inheritance
+        and <code>Coh<sub>π</sub>(p,n) = 1/p</code> exactly; the visual
+        imbalances explain why the invariant deviates from the floor.
+      </div>
+      <div class="vis-canvas-wrap">
+        <svg id="svgInverse" width="100%" viewBox="0 0 900 240" style="max-height: 240px;"></svg>
+      </div>
+    </div>
+
+    <div class="vis-block">
+      <div class="vis-title">4.4 p-adic tree — concentration of data per prototype</div>
+      <div class="vis-caption">
+        The full tower <code>S<sub>1</sub> → S<sub>2</sub> → … →
+        S<sub>N<sub>max</sub></sub></code> with the <strong>real mass</strong>
+        of the piece on top. <strong>Each node radius is proportional to
+        √(number of windows assigned)</strong>, and edge thickness/opacity
+        reflect the flow of the corresponding child; almost-transparent
+        nodes are practically empty prototypes. Hover over a node for the
+        exact count. To the right of each level you see <em>how many</em>
+        of the <code>p<sup>n</sup></code> formal prototypes are actually
+        occupied: imbalances reveal the piece's internal repertoire
+        (e.g. a head heavily repeated + many unique windows, vs. a more
+        uniform distribution).
+        <br><strong>Technical note.</strong> Combinatorial branching is
+        controlled by <code>K<sub>child</sub></code> in panel 2, not by
+        the prime <code>p</code>: by default they are kept in sync
+        (<code>K<sub>child</sub> = p</code>) for an honest p-adic tower.
+      </div>
+      <div id="treeContainer"></div>
+    </div>
+
+    <div class="vis-block">
+      <div class="vis-title">4.5 Heatmap of the transition matrix π</div>
+      <div class="vis-caption">
+        Matrix <code>M<sub>i,j</sub></code> = number of windows
+        <em>at level n+1 mapped to child j</em> hanging off parent
+        <em>i</em> at level <em>n</em>. Empty rows = parents with no
+        occupied descendants; concentrated columns = branches absorbing
+        most of the piece. This is the cleanest visualisation of how
+        unbalanced the tower is <em>in the data</em>: the tree and the
+        Sankey are <strong>regular by construction</strong>, but this
+        matrix exposes the <strong>effective arithmetic</strong> of the
+        piece. If the top bar looks roughly uniform and the matrix
+        looks like a diagonal band you are close to the theoretical
+        floor <code>1/p</code>; if it is concentrated in a few cells,
+        the piece has a restricted internal repertoire (lots of
+        repetition).
+      </div>
+      <div class="row">
+        <label class="small">Parent level n
+          <select id="heatLevel"></select>
+        </label>
+        <span class="small" id="heatStats" style="margin-left:0.5rem;color:#666;"></span>
+      </div>
+      <div id="heatContainer"></div>
+    </div>
+
+    <details style="margin-top: 1rem;">
+      <summary>What does this all mean?</summary>
+      <p class="small">
+        The method quantises the piece into windows of length
+        <code>p<sup>n</sup></code> (the <em>p-adic balls</em>) for each level
+        <em>n</em>. At each level, the windows are clustered into
+        <code>K · p<sup>n−1</sup></code> prototypes by k-means. The inverse
+        system <code>π</code> forces each prototype at level n+1 to
+        explicitly inherit a parent at level n.
+      </p>
+      <p class="small">
+        The invariant <code>Coh<sub>π</sub>(p,n)</code> measures the fraction
+        of windows that are consistent with this inheritance. Proposition 3.1
+        proves that whenever the structural hypotheses (SC) and (AI) hold,
+        the invariant equals <code>1/p</code> exactly — the architectural
+        null floor. Pieces that deviate from the floor reveal polyphonic
+        texture or non-canonical metric structure.
+      </p>
+      <p class="small">
+        In the in-browser applet, the engine is restricted to monophonic
+        flows and small primes. For exhaustive analyses on full polyphonic
+        corpora and comparison against null models, use the Python package
+        with <code>padicmidi run-suite</code>.
+      </p>
+    </details>
+  </section>
+
+  <section class="panel" id="diagSection" style="display:none;">
+    <h2>5. p-arity diagnostic
+      <span class="small" style="font-weight:400; color:var(--muted);">
+        — kNN-graph spectral invariants (Paper 1)
+      </span>
+    </h2>
+    <p class="small" style="margin: 0.2rem 0 0.6rem;">
+      These are the canonical figures of the applied paper:
+      at every level <em>n</em> we build the <em>k</em>-NN graph on the
+      windows of length <code>p<sup>n</sup></code> (cap=300, k=10 by
+      default, RMSE distance). We compare
+      <span style="color:#1f77b4">p=2</span> vs
+      <span style="color:#ff7f0e">p=3</span>: when the correct prime
+      matches the metric of the piece, the invariants visibly separate.
+    </p>
+    <div class="row" style="gap:0.6rem; flex-wrap:wrap; margin-bottom:0.5rem;">
+      <label class="small">k neighbours
+        <input type="number" id="diagK" value="10" min="2" max="30" style="width:70px;">
+      </label>
+      <label class="small">cap
+        <input type="number" id="diagCap" value="300" min="50" max="600" style="width:80px;">
+      </label>
+      <label class="small">N<sub>max</sub>
+        <input type="number" id="diagNmax" value="4" min="2" max="6" style="width:70px;">
+      </label>
+      <span id="diagStatus" class="small"></span>
+    </div>
+    <div id="diagHeader" class="result-header" style="display:none;"></div>
+    <div id="diagCharts" class="diag-grid"></div>
+    <div class="row" style="margin-top: 0.6rem;">
+      <button id="diagDownloadCsv" class="btn">Download CSV (p=2 + p=3)</button>
+      <span id="diagSummary" class="small"></span>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>About</h2>
+    <p class="small" style="margin: 0;">
+      <strong>PAdicMIDI</strong> · A Python toolkit for hierarchical, ultrametric, and <em>p</em>-adic analysis of symbolic music data.
+      Author: <strong>Jesús Rogelio Pérez Buendía</strong> (publishes as J. Rogelio Pérez-Buendía), CIMAT-Mérida.
+      ORCID <a href="https://orcid.org/0000-0002-7739-4779">0000-0002-7739-4779</a> ·
+      Web <a href="https://www.cimat.mx/~rogelio.perez">www.cimat.mx/~rogelio.perez</a>.
+      Funding: SECIHTI grant CF-2019/217367. Source code: MIT licence.
+      Companion papers: <em>Prime-power indexed multiscale graph diagnostics</em> (JMM, 2026) and
+      <em>Profinite hierarchical patterns and prime-indexed multiscale invariants in symbolic music</em> (2026).
+    </p>
+  </section>
+</main>
+
+<footer>
+  PAdicMIDI v1.0.0 — applet.html — runs entirely offline, no telemetry, no external requests.
+</footer>
+
+<script>
+"use strict";
+/* ============================================================================
+   Minimal Standard MIDI File parser — extracts (t_on, t_off, pitch, vel) in
+   either seconds or beat-time. Supports format 0/1 with multi-track merging
+   and tempo changes. Polyphony is allowed but the current pipeline treats the
+   per-(channel,note) note-on/off pairs.
+   ============================================================================ */
+
+function parseMidi(arrayBuffer) {
+  const dv = new DataView(arrayBuffer);
+  let off = 0;
+
+  function readStr(len) {
+    let s = "";
+    for (let i = 0; i < len; i++) s += String.fromCharCode(dv.getUint8(off + i));
+    off += len;
+    return s;
+  }
+  function readUint32() { const v = dv.getUint32(off); off += 4; return v; }
+  function readUint16() { const v = dv.getUint16(off); off += 2; return v; }
+  function readUint8() { return dv.getUint8(off++); }
+  function readVarLen() {
+    let v = 0, b;
+    do { b = dv.getUint8(off++); v = (v << 7) | (b & 0x7f); } while (b & 0x80);
+    return v;
+  }
+
+  if (readStr(4) !== "MThd") throw new Error("Not a Standard MIDI file");
+  if (readUint32() !== 6) throw new Error("Bad MThd length");
+  const format = readUint16();
+  const ntracks = readUint16();
+  const division = readUint16();
+  if (division & 0x8000) throw new Error("SMPTE division not supported");
+  const tpq = division;
+
+  const events = [];   // { t_on, t_off, pitch, vel } — in seconds
+  const eventsBeats = []; // { u_on, u_off, pitch, vel } — in beats
+
+  // Per-track absolute ticks → seconds via tempo map.
+  // Strategy: collect tempo events first (across all tracks merged at tick).
+  const tempoEvents = []; // { tick, microsecondsPerQuarter }
+  const trackEvents = []; // [ [ {tick, msg} ] per track ]
+
+  for (let t = 0; t < ntracks; t++) {
+    if (readStr(4) !== "MTrk") throw new Error("Bad track header");
+    const len = readUint32();
+    const end = off + len;
+    let absTick = 0;
+    let lastStatus = 0;
+    const localEvents = [];
+    while (off < end) {
+      const dt = readVarLen();
+      absTick += dt;
+      let status = dv.getUint8(off);
+      if (status < 0x80) {
+        // running status
+        status = lastStatus;
+      } else {
+        off++;
+        lastStatus = status;
+      }
+      if (status === 0xff) {
+        // meta
+        const type = readUint8();
+        const mlen = readVarLen();
+        if (type === 0x51 && mlen === 3) {
+          const a = readUint8(), b = readUint8(), c = readUint8();
+          const us = (a << 16) | (b << 8) | c;
+          tempoEvents.push({ tick: absTick, mspq: us });
+        } else {
+          off += mlen;
+        }
+      } else if (status === 0xf0 || status === 0xf7) {
+        const sl = readVarLen();
+        off += sl;
+      } else {
+        const high = status & 0xf0;
+        const ch = status & 0x0f;
+        if (high === 0x80 || high === 0x90 || high === 0xa0 || high === 0xb0 || high === 0xe0) {
+          const d1 = readUint8(), d2 = readUint8();
+          localEvents.push({ tick: absTick, status: high, ch, d1, d2 });
+        } else if (high === 0xc0 || high === 0xd0) {
+          readUint8();
+        } else {
+          // shouldn't happen
+        }
+      }
+    }
+    off = end;
+    trackEvents.push(localEvents);
+  }
+
+  // Sort tempo events by tick; default 500_000 mspq (120 BPM).
+  tempoEvents.sort((a, b) => a.tick - b.tick);
+  if (tempoEvents.length === 0 || tempoEvents[0].tick !== 0) {
+    tempoEvents.unshift({ tick: 0, mspq: 500000 });
+  }
+  function tickToSec(tick) {
+    let sec = 0;
+    let last = tempoEvents[0];
+    for (let i = 1; i < tempoEvents.length; i++) {
+      const e = tempoEvents[i];
+      if (e.tick > tick) break;
+      sec += ((e.tick - last.tick) / tpq) * (last.mspq / 1e6);
+      last = e;
+    }
+    sec += ((tick - last.tick) / tpq) * (last.mspq / 1e6);
+    return sec;
+  }
+
+  // Match note_on/note_off across all tracks, per (channel, pitch).
+  for (const local of trackEvents) {
+    const on = new Map(); // key = ch*128 + pitch -> { tick, vel }
+    for (const ev of local) {
+      const key = ev.ch * 128 + ev.d1;
+      const isOn = ev.status === 0x90 && ev.d2 > 0;
+      const isOff = ev.status === 0x80 || (ev.status === 0x90 && ev.d2 === 0);
+      if (isOn) {
+        on.set(key, { tick: ev.tick, vel: ev.d2 });
+      } else if (isOff) {
+        const start = on.get(key);
+        if (start !== undefined) {
+          on.delete(key);
+          const t_on = tickToSec(start.tick);
+          const t_off = tickToSec(ev.tick);
+          if (t_off > t_on) {
+            events.push({ t_on, t_off, pitch: ev.d1, vel: start.vel });
+            eventsBeats.push({ u_on: start.tick / tpq, u_off: ev.tick / tpq, pitch: ev.d1, vel: start.vel });
+          }
+        }
+      }
+    }
+  }
+
+  events.sort((a, b) => a.t_on - b.t_on);
+  eventsBeats.sort((a, b) => a.u_on - b.u_on);
+
+  return { events, eventsBeats, tpq, format, ntracks };
+}
+
+/* ============================================================================
+   Series builders: chroma (12D) + onset density (1D) → X (Tx13).
+   Beat-axis only in this applet (matches the gold standard for BWV 1007).
+   ============================================================================ */
+
+function buildChromaBeats(events, binBeats) {
+  if (events.length === 0) return { H: [], a: [] };
+  const u0 = events[0].u_on;
+  const u1 = events.reduce((m, e) => Math.max(m, e.u_off), -Infinity);
+  const U = u1 - u0;
+  const nbins = Math.max(1, Math.floor(U / binBeats) + 1);
+  const H = Array.from({ length: nbins }, () => new Float64Array(12));
+  const a = new Float64Array(nbins);
+  for (const ev of events) {
+    if (ev.u_off <= ev.u_on) continue;
+    const pc = ev.pitch % 12;
+    const b0 = Math.floor((ev.u_on - u0) / binBeats);
+    const b1 = Math.floor((ev.u_off - u0) / binBeats);
+    for (let b = b0; b <= Math.min(b1, nbins - 1); b++) {
+      const left = u0 + b * binBeats;
+      const right = u0 + (b + 1) * binBeats;
+      const overlap = Math.max(0, Math.min(ev.u_off, right) - Math.max(ev.u_on, left));
+      if (overlap > 0) H[b][pc] += overlap * (ev.vel / 127);
+    }
+    if (b0 >= 0 && b0 < nbins) a[b0] += ev.vel / 127;
+  }
+  for (let i = 0; i < nbins; i++) {
+    let s = 0;
+    for (let k = 0; k < 12; k++) s += H[i][k];
+    if (s > 0) for (let k = 0; k < 12; k++) H[i][k] /= s;
+  }
+  return { H, a };
+}
+
+function seriesWithRhythm(H, a, alpha) {
+  const T = Math.min(H.length, a.length);
+  const X = new Array(T);
+  for (let i = 0; i < T; i++) {
+    const row = new Float64Array(13);
+    for (let k = 0; k < 12; k++) row[k] = H[i][k];
+    row[12] = alpha * a[i];
+    X[i] = row;
+  }
+  return X;
+}
+
+/* ============================================================================
+   Window utilities and per-residue median aggregation.
+   ============================================================================ */
+
+function getWindows(X, N, step) {
+  const out = [];
+  for (let s = 0; s + N <= X.length; s += step) {
+    const w = new Array(N);
+    for (let i = 0; i < N; i++) w[i] = X[s + i];
+    out.push({ start: s, w });
+  }
+  return out;
+}
+
+function aggregateMedian(windows) {
+  if (windows.length === 0) return null;
+  const N = windows[0].length;
+  const out = new Array(N);
+  for (let i = 0; i < N; i++) {
+    const row = new Float64Array(13);
+    for (let k = 0; k < 13; k++) {
+      const buf = new Float64Array(windows.length);
+      for (let q = 0; q < windows.length; q++) buf[q] = windows[q][i][k];
+      buf.sort();
+      const m = windows.length;
+      row[k] = (m % 2 === 1) ? buf[(m - 1) >> 1] : 0.5 * (buf[m / 2 - 1] + buf[m / 2]);
+    }
+    out[i] = row;
+  }
+  return out;
+}
+
+function buildWn(X, p, nmax, step, maxPerResidue) {
+  const Wn = {};
+  for (let n = 1; n <= nmax; n++) {
+    const N = Math.pow(p, n);
+    const ws = getWindows(X, N, step);
+    const byRes = {};
+    for (const { start, w } of ws) {
+      const a = start % Math.pow(p, n);
+      if (!byRes[a]) byRes[a] = [];
+      if (byRes[a].length < maxPerResidue) byRes[a].push(w);
+    }
+    Wn[n] = {};
+    for (const a in byRes) Wn[n][a] = aggregateMedian(byRes[a]);
+  }
+  return Wn;
+}
+
+/* ============================================================================
+   Distance and K-means (deterministic with a seeded RNG).
+   ============================================================================ */
+
+function dist(a, b) {
+  const N = a.length;
+  let sum = 0;
+  for (let i = 0; i < N; i++) {
+    let s = 0;
+    for (let k = 0; k < 13; k++) {
+      const d = a[i][k] - b[i][k];
+      s += d * d;
+    }
+    sum += s;
+  }
+  return Math.sqrt(sum / N);
+}
+
+function flatten(w) {
+  const N = w.length;
+  const out = new Float64Array(N * 13);
+  for (let i = 0; i < N; i++) for (let k = 0; k < 13; k++) out[i * 13 + k] = w[i][k];
+  return out;
+}
+
+function unflatten(flat, N) {
+  const out = new Array(N);
+  for (let i = 0; i < N; i++) {
+    const row = new Float64Array(13);
+    for (let k = 0; k < 13; k++) row[k] = flat[i * 13 + k];
+    out[i] = row;
+  }
+  return out;
+}
+
+// Mulberry32 — deterministic PRNG seeded by integer.
+function makeRng(seed) {
+  let s = seed >>> 0;
+  return function() {
+    s |= 0; s = s + 0x6D2B79F5 | 0;
+    let t = Math.imul(s ^ s >>> 15, 1 | s);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+function kmeans(samples, K, rng, maxIter = 30) {
+  if (samples.length === 0) return [];
+  const D = samples[0].length;
+  const Kactual = Math.max(1, Math.min(K, samples.length));
+  const idx = Array.from({ length: samples.length }, (_, i) => i);
+  for (let i = idx.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [idx[i], idx[j]] = [idx[j], idx[i]];
+  }
+  let centers = idx.slice(0, Kactual).map(i => Float64Array.from(samples[i]));
+  for (let iter = 0; iter < maxIter; iter++) {
+    const labels = new Int32Array(samples.length);
+    for (let n = 0; n < samples.length; n++) {
+      let best = 0, bestD = Infinity;
+      for (let j = 0; j < centers.length; j++) {
+        let s = 0;
+        for (let k = 0; k < D; k++) {
+          const d = samples[n][k] - centers[j][k];
+          s += d * d;
+        }
+        if (s < bestD) { bestD = s; best = j; }
+      }
+      labels[n] = best;
+    }
+    const newCenters = centers.map(() => new Float64Array(D));
+    const counts = new Int32Array(centers.length);
+    for (let n = 0; n < samples.length; n++) {
+      const c = labels[n];
+      counts[c]++;
+      for (let k = 0; k < D; k++) newCenters[c][k] += samples[n][k];
+    }
+    for (let j = 0; j < centers.length; j++) {
+      if (counts[j] > 0) for (let k = 0; k < D; k++) newCenters[j][k] /= counts[j];
+      else newCenters[j] = Float64Array.from(centers[j]);
+    }
+    let moved = 0;
+    for (let j = 0; j < centers.length; j++)
+      for (let k = 0; k < D; k++) moved += Math.abs(newCenters[j][k] - centers[j][k]);
+    centers = newCenters;
+    if (moved < 1e-12) break;
+  }
+  return centers;
+}
+
+/* ============================================================================
+   p-arity diagnostic: spectral invariants of the kNN graph.
+   Mirrors padicmidi.core.echo.run_tower_on_beats: at each level n we build
+   the windows of length p^n (step `step`, linearly subsampled to `cap`),
+   build the k-NN graph on them with the RMSE distance between patterns,
+   and report V, E, avg_degree, beta_0, giant_component_frac, average
+   clustering and lambda_2 (Fiedler of the normalized Laplacian).
+   ============================================================================ */
+
+function buildPatternsDiag(X, N, step, cap) {
+  if (X.length < N) return [];
+  const D = X[0].length;
+  const ws = [];
+  for (let s = 0; s + N <= X.length; s += step) {
+    const w = new Float64Array(N * D);
+    for (let i = 0; i < N; i++) {
+      const row = X[s + i];
+      for (let k = 0; k < D; k++) w[i * D + k] = row[k];
+    }
+    ws.push(w);
+  }
+  if (ws.length <= cap) return ws;
+  const out = new Array(cap);
+  for (let i = 0; i < cap; i++) {
+    out[i] = ws[Math.round((i * (ws.length - 1)) / (cap - 1))];
+  }
+  return out;
+}
+
+function patternDistFlat(a, b, N) {
+  let s = 0;
+  const len = a.length;
+  for (let k = 0; k < len; k++) {
+    const d = a[k] - b[k];
+    s += d * d;
+  }
+  return Math.sqrt(s / N);
+}
+
+function knnGraphDiag(patterns, k, N) {
+  const m = patterns.length;
+  const adj = new Array(m);
+  for (let i = 0; i < m; i++) adj[i] = new Set();
+  const kEff = Math.max(1, Math.min(k, m - 1));
+  if (kEff < 1) return adj;
+  for (let i = 0; i < m; i++) {
+    const dists = new Array(m - 1);
+    let q = 0;
+    for (let j = 0; j < m; j++) {
+      if (j === i) continue;
+      dists[q++] = [patternDistFlat(patterns[i], patterns[j], N), j];
+    }
+    dists.sort((x, y) => x[0] - y[0]);
+    for (let r = 0; r < kEff; r++) {
+      const j = dists[r][1];
+      adj[i].add(j); adj[j].add(i);
+    }
+  }
+  return adj;
+}
+
+function edgeCountAdj(adj) {
+  let s = 0; for (let i = 0; i < adj.length; i++) s += adj[i].size; return s / 2;
+}
+
+function componentsBfsAdj(adj) {
+  const V = adj.length;
+  const seen = new Uint8Array(V);
+  const sizes = [];
+  for (let s = 0; s < V; s++) {
+    if (seen[s]) continue;
+    let count = 0;
+    const stack = [s]; seen[s] = 1;
+    while (stack.length) {
+      const v = stack.pop(); count++;
+      for (const w of adj[v]) { if (!seen[w]) { seen[w] = 1; stack.push(w); } }
+    }
+    sizes.push(count);
+  }
+  return sizes;
+}
+
+function avgClusteringAdj(adj) {
+  const V = adj.length;
+  if (V === 0) return 0;
+  let sum = 0;
+  for (let v = 0; v < V; v++) {
+    const nbrs = Array.from(adj[v]);
+    const d = nbrs.length;
+    if (d < 2) continue;
+    let triangles = 0;
+    for (let i = 0; i < d; i++) {
+      const ni = nbrs[i];
+      for (let j = i + 1; j < d; j++) if (adj[ni].has(nbrs[j])) triangles++;
+    }
+    sum += (2 * triangles) / (d * (d - 1));
+  }
+  return sum / V;
+}
+
+function fiedlerLambda2(adj, opts) {
+  const { maxIter = 200, tol = 1e-7 } = opts || {};
+  const V = adj.length;
+  if (V < 2) return 0;
+  const sizes = componentsBfsAdj(adj);
+  if (Math.max(...sizes) < 2) return 0;
+  const seen = new Uint8Array(V);
+  let bestComp = null, bestSize = 0;
+  for (let s = 0; s < V; s++) {
+    if (seen[s]) continue;
+    const stack = [s], comp = []; seen[s] = 1;
+    while (stack.length) {
+      const v = stack.pop(); comp.push(v);
+      for (const w of adj[v]) if (!seen[w]) { seen[w] = 1; stack.push(w); }
+    }
+    if (comp.length > bestSize) { bestSize = comp.length; bestComp = comp; }
+  }
+  if (!bestComp || bestComp.length < 2) return 0;
+  const localIdx = new Map(); bestComp.forEach((v, i) => localIdx.set(v, i));
+  const n = bestComp.length;
+  const localAdj = bestComp.map(v =>
+    Array.from(adj[v]).filter(w => localIdx.has(w)).map(w => localIdx.get(w)));
+  const sqDeg = new Float64Array(n);
+  for (let i = 0; i < n; i++) sqDeg[i] = Math.sqrt(localAdj[i].length || 1);
+  let nrm = 0;
+  for (let i = 0; i < n; i++) nrm += sqDeg[i] * sqDeg[i];
+  nrm = Math.sqrt(nrm);
+  const v0 = new Float64Array(n);
+  for (let i = 0; i < n; i++) v0[i] = sqDeg[i] / nrm;
+
+  function applyL(y) {
+    const out = new Float64Array(n);
+    for (let i = 0; i < n; i++) {
+      let acc = 0;
+      const nbrs = localAdj[i];
+      const di = sqDeg[i];
+      for (let q = 0; q < nbrs.length; q++) acc += y[nbrs[q]] / sqDeg[nbrs[q]];
+      out[i] = y[i] - acc / di;
+    }
+    return out;
+  }
+  function deflate(y) {
+    let dot = 0;
+    for (let i = 0; i < n; i++) dot += y[i] * v0[i];
+    const out = new Float64Array(n);
+    for (let i = 0; i < n; i++) out[i] = y[i] - dot * v0[i];
+    return out;
+  }
+  function normalize(y) {
+    let s = 0;
+    for (let i = 0; i < n; i++) s += y[i] * y[i];
+    s = Math.sqrt(s);
+    if (s < 1e-30) return y;
+    const out = new Float64Array(n);
+    for (let i = 0; i < n; i++) out[i] = y[i] / s;
+    return out;
+  }
+  let y = new Float64Array(n);
+  let seed = 12345;
+  for (let i = 0; i < n; i++) {
+    seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+    y[i] = (seed / 4294967296) - 0.5;
+  }
+  y = deflate(y); y = normalize(y);
+  let lambda = 0;
+  for (let iter = 0; iter < maxIter; iter++) {
+    const Ly = applyL(y);
+    const My = new Float64Array(n);
+    for (let i = 0; i < n; i++) My[i] = 2 * y[i] - Ly[i];
+    let z = deflate(My); z = normalize(z);
+    const Lz = applyL(z);
+    let rq = 0; for (let i = 0; i < n; i++) rq += z[i] * Lz[i];
+    if (Math.abs(rq - lambda) < tol) { lambda = rq; y = z; break; }
+    lambda = rq; y = z;
+  }
+  return Math.max(0, lambda);
+}
+
+function runTowerDiagnostics(X, p, nmax, k, cap, step) {
+  cap = cap || 300; step = step || 2;
+  const out = [];
+  for (let n = 1; n <= nmax; n++) {
+    const N = Math.pow(p, n);
+    const patterns = buildPatternsDiag(X, N, step, cap);
+    if (patterns.length < 2) {
+      out.push({ n, N, V: patterns.length, E: 0, avg_degree: 0,
+                 beta0: 0, giant_frac: 0, clustering: 0, lambda2: 0 });
+      continue;
+    }
+    const adj = knnGraphDiag(patterns, k, N);
+    const sizes = componentsBfsAdj(adj);
+    const E = edgeCountAdj(adj);
+    out.push({
+      n, N,
+      V: patterns.length,
+      E,
+      avg_degree: (2 * E) / patterns.length,
+      beta0: sizes.length,
+      giant_frac: Math.max(...sizes) / patterns.length,
+      clustering: avgClusteringAdj(adj),
+      lambda2: fiedlerLambda2(adj),
+    });
+  }
+  return out;
+}
+
+/* ============================================================================
+   Hierarchical motor: tower S_1 ... S_{nmax} with forced pi.
+   ============================================================================ */
+
+function runHierarchical(X, p, nmax, K, Kchild, M, step, seed) {
+  const rng = makeRng(seed);
+  const maxPerResidue = 800;
+  const Wn = buildWn(X, p, nmax, step, maxPerResidue);
+
+  const N1 = p;
+  const win1 = getWindows(X, N1, step);
+  if (win1.length === 0) throw new Error("Series too short for the chosen prime.");
+
+  // sample M windows equidistant
+  const stepSample = Math.max(1, Math.floor(win1.length / Math.min(M, win1.length)));
+  const sample1 = [];
+  for (let i = 0; i < win1.length && sample1.length < M; i += stepSample) {
+    sample1.push(flatten(win1[i].w));
+  }
+  const centers1 = kmeans(sample1, K, rng);
+  const protos = { 1: centers1.map(c => unflatten(c, N1)) };
+  const fmaps = { 1: {} };
+  for (const a of Object.keys(Wn[1] || {})) {
+    const w = Wn[1][a];
+    if (!w) continue;
+    let best = 0, bestD = Infinity;
+    for (let j = 0; j < protos[1].length; j++) {
+      const d = dist(w, protos[1][j]);
+      if (d < bestD) { bestD = d; best = j; }
+    }
+    fmaps[1][a] = best;
+  }
+
+  const piMaps = {};
+  for (let n = 1; n < nmax; n++) {
+    const pn = Math.pow(p, n);
+    const pn1 = Math.pow(p, n + 1);
+    if (!Wn[n + 1] || Object.keys(Wn[n + 1]).length === 0) continue;
+    const bs = Object.keys(Wn[n + 1]).map(Number).sort((a, b) => a - b);
+    const parentOf = {};
+    for (const b of bs) {
+      const w = Wn[n + 1][b];
+      const trunc = w.slice(0, pn);
+      let best = 0, bestD = Infinity;
+      for (let j = 0; j < protos[n].length; j++) {
+        const d = dist(trunc, protos[n][j]);
+        if (d < bestD) { bestD = d; best = j; }
+      }
+      parentOf[b] = best;
+    }
+    const byParent = {};
+    for (const b of bs) {
+      const par = parentOf[b];
+      if (!byParent[par]) byParent[par] = [];
+      byParent[par].push(Wn[n + 1][b]);
+    }
+    const allChildren = [];
+    const piList = [];
+    for (let j = 0; j < protos[n].length; j++) {
+      const wlist = byParent[j] || [];
+      const Keff = Math.max(1, Math.min(Kchild, wlist.length));
+      if (wlist.length < 2) {
+        // Pad to length pn1 = p * pn by replicating the parent prototype
+        // p times. The previous implementation only concatenated twice,
+        // which is correct only for p=2 and broke for any p>2.
+        let pad;
+        if (wlist.length === 1) {
+          pad = wlist[0];
+        } else {
+          pad = [];
+          while (pad.length < pn1) pad = pad.concat(protos[n][j]);
+          pad = pad.slice(0, pn1);
+        }
+        for (let q = 0; q < Kchild; q++) {
+          allChildren.push(pad);
+          piList.push(j);
+        }
+      } else {
+        const flat = wlist.map(flatten);
+        const cc = kmeans(flat, Keff, rng);
+        for (let q = 0; q < cc.length; q++) {
+          allChildren.push(unflatten(cc[q], pn1));
+          piList.push(j);
+        }
+        for (let q = cc.length; q < Kchild; q++) {
+          allChildren.push(allChildren[allChildren.length - 1]);
+          piList.push(j);
+        }
+      }
+    }
+    protos[n + 1] = allChildren;
+    piMaps[n] = piList;
+    fmaps[n + 1] = {};
+    for (const b of bs) {
+      const w = Wn[n + 1][b];
+      let best = 0, bestD = Infinity;
+      for (let j = 0; j < allChildren.length; j++) {
+        const d = dist(w, allChildren[j]);
+        if (d < bestD) { bestD = d; best = j; }
+      }
+      fmaps[n + 1][b] = best;
+    }
+  }
+
+  const coh = [];
+  for (let n = 1; n < nmax; n++) {
+    if (!piMaps[n] || !fmaps[n + 1] || !fmaps[n]) continue;
+    const pn = Math.pow(p, n);
+    const pn1 = Math.pow(p, n + 1);
+    const validBs = [];
+    for (let b = 0; b < pn1; b++) {
+      if (Wn[n + 1] && Wn[n + 1][b] && fmaps[n + 1][b] !== undefined && fmaps[n][b % pn] !== undefined) {
+        validBs.push(b);
+      }
+    }
+    if (validBs.length === 0) continue;
+    let match = 0;
+    for (const b of validBs) {
+      const child = fmaps[n + 1][b];
+      const parent_via_pi = piMaps[n][child];
+      const parent_quant = fmaps[n][b % pn];
+      if (parent_via_pi === parent_quant) match++;
+    }
+    coh.push({
+      n,
+      Coh_pi: match / pn1,
+      n_samples_n: Object.keys(Wn[n] || {}).length,
+      n_samples_nplus1: validBs.length,
+    });
+  }
+  return { coh, protos, fmaps, piMaps };
+}
+
+/* ============================================================================
+   UI controller.
+   ============================================================================ */
+
+let LOADED = null; // { name, buffer }
+let LAST_RESULT = null;
+let LAST_DIAG = null;  // p-arity diagnostic results (panel 5)
+const fileInput = document.getElementById('fileInput');
+const dropZone = document.getElementById('dropZone');
+const demoBtn = document.getElementById('demoBtn');
+const runBtn = document.getElementById('runBtn');
+const runStatus = document.getElementById('runStatus');
+const loadedInfo = document.getElementById('loadedInfo');
+const resultsPanel = document.getElementById('resultsPanel');
+
+// Short hash (FNV-1a 32 bits) to identify loaded files.
+function shortHash(buf) {
+  const arr = new Uint8Array(buf);
+  let h = 0x811c9dc5 >>> 0;
+  for (let i = 0; i < arr.length; i++) {
+    h ^= arr[i];
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return h.toString(16).padStart(8, '0');
+}
+
+function clearResults(reason) {
+  // Visually reset the results panel; pass `reason` to also update the
+  // status line so the user knows why results disappeared.
+  const panel = document.getElementById('resultsPanel');
+  if (panel) panel.style.display = "none";
+  const tbody = document.querySelector('#cohTable tbody');
+  if (tbody) tbody.innerHTML = "";
+  const fp = document.getElementById('floorNote');
+  if (fp) { fp.style.display = "none"; fp.innerHTML = ""; }
+  const rh = document.getElementById('resultHeader');
+  if (rh) rh.innerHTML = "";
+  const summary = document.getElementById('cohSummary');
+  if (summary) summary.textContent = "";
+  // Also clear the p-arity diagnostic panel if it was visible.
+  const diagSection = document.getElementById('diagSection');
+  if (diagSection) diagSection.style.display = "none";
+  const diagCharts = document.getElementById('diagCharts');
+  if (diagCharts) diagCharts.innerHTML = "";
+  const diagHeader = document.getElementById('diagHeader');
+  if (diagHeader) { diagHeader.innerHTML = ""; diagHeader.style.display = "none"; }
+  const diagSummary = document.getElementById('diagSummary');
+  if (diagSummary) diagSummary.textContent = "";
+  LAST_DIAG = null;
+  LAST_RESULT = null;
+  if (reason) {
+    runStatus.textContent = reason;
+    runStatus.style.color = "";
+  }
+}
+
+/* ============================================================================
+   MIDI player with WebAudio (basic "pluck" synthesiser). 100% offline,
+   no dependencies. All notes are scheduled with the AudioContext clock
+   for precise timing; OscillatorNode (triangle) + decay envelope per note.
+   Pause/seek cancel scheduled oscillators and reschedule from the new pos.
+   ============================================================================ */
+class MidiSynthPlayer {
+  constructor() {
+    this.events = [];
+    this.duration = 0;
+    this.ctx = null;
+    this.master = null;
+    this.scheduled = [];
+    this.startCtxTime = 0;
+    this.pauseOffset = 0;
+    this.state = 'idle';
+    this.tickHandle = null;
+    this.onProgress = null;
+    this.volume = 0.6;
+  }
+  ensureCtx() {
+    if (this.ctx) return;
+    const Ctor = window.AudioContext || window.webkitAudioContext;
+    if (!Ctor) throw new Error("WebAudio not available in this browser.");
+    this.ctx = new Ctor();
+    this.master = this.ctx.createGain();
+    this.master.gain.value = this.volume;
+    this.master.connect(this.ctx.destination);
+  }
+  setVolume(v) { this.volume = v; if (this.master) this.master.gain.value = v; }
+  loadEvents(events) {
+    this.stop();
+    this.events = events.slice().sort((a, b) => a.t_on - b.t_on);
+    this.duration = this.events.reduce((m, e) => Math.max(m, e.t_off), 0);
+    this.pauseOffset = 0;
+    if (this.onProgress) this.onProgress(0, this.duration);
+  }
+  _scheduleFrom(fromSec) {
+    this.ensureCtx();
+    if (this.ctx.state === 'suspended') this.ctx.resume();
+    const t0 = this.ctx.currentTime + 0.05;
+    this.startCtxTime = t0 - fromSec;
+    for (const e of this.events) {
+      if (e.t_off <= fromSec) continue;
+      const onAt = Math.max(0, e.t_on - fromSec);
+      const offAt = e.t_off - fromSec;
+      const startTime = t0 + onAt;
+      const stopTime  = t0 + offAt;
+      const dur = Math.max(0.04, Math.min(stopTime - startTime, 1.6));
+      const osc = this.ctx.createOscillator();
+      osc.type = 'triangle';
+      osc.frequency.value = 440 * Math.pow(2, (e.pitch - 69) / 12);
+      const g = this.ctx.createGain();
+      const peak = 0.18 * (e.vel / 127 + 0.05);
+      g.gain.setValueAtTime(0.0, startTime);
+      g.gain.linearRampToValueAtTime(peak, startTime + 0.005);
+      g.gain.exponentialRampToValueAtTime(Math.max(0.001, peak * 0.05), startTime + dur);
+      g.gain.setValueAtTime(0.0, startTime + dur + 0.01);
+      osc.connect(g).connect(this.master);
+      osc.start(startTime);
+      osc.stop(startTime + dur + 0.05);
+      this.scheduled.push(osc);
+    }
+  }
+  _clearScheduled() {
+    for (const o of this.scheduled) {
+      try { o.stop(0); } catch (_) {}
+      try { o.disconnect(); } catch (_) {}
+    }
+    this.scheduled = [];
+  }
+  play() {
+    if (this.events.length === 0) return;
+    if (this.state === 'playing') return;
+    this._scheduleFrom(this.pauseOffset);
+    this.state = 'playing';
+    this._startTick();
+  }
+  pause() {
+    if (this.state !== 'playing') return;
+    const elapsed = this.ctx.currentTime - this.startCtxTime;
+    this.pauseOffset = Math.max(0, Math.min(this.duration, elapsed));
+    this._clearScheduled();
+    this.state = 'paused';
+    this._stopTick();
+    if (this.onProgress) this.onProgress(this.pauseOffset, this.duration);
+  }
+  stop() {
+    this._clearScheduled();
+    this.pauseOffset = 0;
+    this.state = 'idle';
+    this._stopTick();
+    if (this.onProgress) this.onProgress(0, this.duration);
+  }
+  seek(sec) {
+    const target = Math.max(0, Math.min(this.duration, sec));
+    const wasPlaying = this.state === 'playing';
+    this._clearScheduled();
+    this.pauseOffset = target;
+    if (wasPlaying) {
+      this._scheduleFrom(this.pauseOffset);
+      this.state = 'playing';
+      this._startTick();
+    } else {
+      if (this.onProgress) this.onProgress(this.pauseOffset, this.duration);
+    }
+  }
+  currentSec() {
+    if (this.state === 'playing' && this.ctx) {
+      const t = this.ctx.currentTime - this.startCtxTime;
+      return Math.max(0, Math.min(this.duration, t));
+    }
+    return this.pauseOffset;
+  }
+  _startTick() {
+    if (this.tickHandle) cancelAnimationFrame(this.tickHandle);
+    const tick = () => {
+      if (this.state !== 'playing') return;
+      const sec = this.currentSec();
+      if (this.onProgress) this.onProgress(sec, this.duration);
+      if (sec >= this.duration - 0.01) { this.stop(); return; }
+      this.tickHandle = requestAnimationFrame(tick);
+    };
+    this.tickHandle = requestAnimationFrame(tick);
+  }
+  _stopTick() { if (this.tickHandle) cancelAnimationFrame(this.tickHandle); this.tickHandle = null; }
+}
+const AUDIO_PLAYER = new MidiSynthPlayer();
+
+(function wireAudioPlayer() {
+  const btnPlay  = document.getElementById('audioPlay');
+  const btnPause = document.getElementById('audioPause');
+  const btnStop  = document.getElementById('audioStop');
+  const seek     = document.getElementById('audioSeek');
+  const tlbl     = document.getElementById('audioTime');
+  const vol      = document.getElementById('audioVol');
+  const status   = document.getElementById('audioStatus');
+  if (!btnPlay) return;
+  function fmt(s) { return s.toFixed(2); }
+  function refresh(sec, dur) {
+    tlbl.textContent = `${fmt(sec)} / ${fmt(dur)} s`;
+    if (dur > 0) {
+      btnPlay.disabled = false; btnPause.disabled = false; btnStop.disabled = false;
+      seek.disabled = false; seek.value = String(Math.round(1000 * sec / dur));
+    } else {
+      btnPlay.disabled = true; btnPause.disabled = true; btnStop.disabled = true;
+      seek.disabled = true; seek.value = "0";
+    }
+    drawTimelineCursor(sec, dur);
+  }
+  AUDIO_PLAYER.onProgress = refresh;
+  refresh(0, 0);
+  btnPlay.addEventListener('click', () => {
+    try { AUDIO_PLAYER.play(); status.textContent = ""; }
+    catch (e) { status.textContent = "Error: " + e.message; }
+  });
+  btnPause.addEventListener('click', () => AUDIO_PLAYER.pause());
+  btnStop.addEventListener('click',  () => AUDIO_PLAYER.stop());
+  seek.addEventListener('input', () => {
+    if (AUDIO_PLAYER.duration <= 0) return;
+    const target = (Number(seek.value) / 1000) * AUDIO_PLAYER.duration;
+    AUDIO_PLAYER.seek(target);
+  });
+  vol.addEventListener('input', () => AUDIO_PLAYER.setVolume(Number(vol.value) / 100));
+  const canvas = document.getElementById('canvasTimeline');
+  if (canvas) {
+    canvas.addEventListener('click', (ev) => {
+      if (AUDIO_PLAYER.duration <= 0) return;
+      const rect = canvas.getBoundingClientRect();
+      const x = (ev.clientX - rect.left) / rect.width;
+      AUDIO_PLAYER.seek(x * AUDIO_PLAYER.duration);
+    });
+    canvas.style.cursor = 'crosshair';
+  }
+})();
+
+function drawTimelineCursor(sec, dur) {
+  const canvas = document.getElementById('canvasTimeline');
+  if (!canvas) return;
+  let overlay = document.getElementById('canvasTimelineCursor');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'canvasTimelineCursor';
+    overlay.style.position = 'absolute';
+    overlay.style.top = '0';
+    overlay.style.bottom = '0';
+    overlay.style.width = '2px';
+    overlay.style.background = '#e63946';
+    overlay.style.pointerEvents = 'none';
+    overlay.style.boxShadow = '0 0 4px rgba(230,57,70,0.6)';
+    overlay.style.display = 'none';
+    const wrap = canvas.parentNode;
+    if (wrap) { wrap.style.position = 'relative'; wrap.appendChild(overlay); }
+  }
+  if (dur <= 0) { overlay.style.display = 'none'; return; }
+  overlay.style.display = '';
+  overlay.style.left = ((sec / dur) * 100) + '%';
+}
+
+function setLoaded(name, buf) {
+  const fp = shortHash(buf);
+  LOADED = { name, buffer: buf, fingerprint: fp, sizeBytes: buf.byteLength };
+  loadedInfo.innerHTML = `loaded: <strong>${name}</strong> (${(buf.byteLength / 1024).toFixed(1)} KB · fingerprint <code>${fp}</code>)`;
+  runBtn.disabled = false;
+  const diagBtn = document.getElementById('diagBtn');
+  if (diagBtn) diagBtn.disabled = false;
+  // Audio player can use the MIDI immediately, without waiting for analysis.
+  try {
+    const parsed = parseMidi(buf);
+    AUDIO_PLAYER.loadEvents(parsed.events || []);
+  } catch (e) {
+    AUDIO_PLAYER.loadEvents([]);
+  }
+  clearResults(`file loaded: ${name}. Press "Run analysis" or "p-arity diagnostic" to process it.`);
+}
+
+fileInput.addEventListener('change', async () => {
+  const file = fileInput.files[0];
+  if (!file) return;
+  const buf = await file.arrayBuffer();
+  setLoaded(file.name, buf);
+});
+
+dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('over'));
+dropZone.addEventListener('drop', async (e) => {
+  e.preventDefault();
+  dropZone.classList.remove('over');
+  const file = e.dataTransfer.files[0];
+  if (!file) return;
+  const buf = await file.arrayBuffer();
+  setLoaded(file.name, buf);
+});
+
+demoBtn.addEventListener('click', async () => {
+  const bytes = base64ToArrayBuffer(BWV1007_BASE64);
+  setLoaded('bwv1007-1.mid (bundled demo)', bytes);
+});
+
+document.getElementById('demoBin').addEventListener('click', () => {
+  setLoaded('toy_binary.mid (project-built synthetic, p=2)', base64ToArrayBuffer(TOY_BINARY_BASE64));
+});
+document.getElementById('demoTer').addEventListener('click', () => {
+  setLoaded('toy_ternary.mid (project-built synthetic, p=3)', base64ToArrayBuffer(TOY_TERNARY_BASE64));
+});
+document.getElementById('demoRng').addEventListener('click', () => {
+  setLoaded('bwv1079_crab_canon.mid (Bach, polyphonic)', base64ToArrayBuffer(CRAB_CANON_BASE64));
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  LOADED = null;
+  loadedInfo.textContent = "";
+  runBtn.disabled = true;
+  const diagBtn = document.getElementById('diagBtn');
+  if (diagBtn) diagBtn.disabled = true;
+  fileInput.value = "";
+  clearResults("session reset — load a MIDI or a demo to start.");
+});
+
+// Auto-sync p ↔ Kchild: so the p-adic tree displays the correct branching
+// factor for the chosen prime, K_child is updated whenever p changes
+// (unless the user has edited K_child by hand). This matters because a
+// faithful p-adic tower has p children per parent — a binary tree drawn
+// for p=3 hides the actual structure.
+(function autoSyncKchildWithP() {
+  const pSel = document.getElementById('paramP');
+  const kc = document.getElementById('paramKchild');
+  if (!pSel || !kc) return;
+  kc.addEventListener('input', () => { kc.dataset.touched = '1'; });
+  pSel.addEventListener('change', () => {
+    if (kc.dataset.touched === '1') return;
+    kc.value = pSel.value;
+  });
+  if (kc.dataset.touched !== '1') kc.value = pSel.value;
+})();
+
+runBtn.addEventListener('click', () => {
+  if (!LOADED) return;
+  // Wipe table/figures BEFORE computing: if the new run produces the
+  // same numbers, it's still obvious that recomputation happened; if it
+  // fails silently, no misleading stale results remain visible.
+  clearResults();
+  runStatus.textContent = "running…";
+  runStatus.style.color = "";
+  setTimeout(() => {
+    try {
+      doRun();
+    } catch (e) {
+      console.error(e);
+      runStatus.textContent = "error: " + e.message;
+      runStatus.style.color = "var(--warn, #b25500)";
+    }
+  }, 30);
+});
+
+document.getElementById('diagBtn').addEventListener('click', () => {
+  if (!LOADED) return;
+  const diagStatus = document.getElementById('diagStatus');
+  const diagSection = document.getElementById('diagSection');
+  diagStatus.textContent = "computing p=2 and p=3…";
+  diagStatus.style.color = "";
+  diagSection.style.display = "";
+  diagSection.scrollIntoView({ behavior: "smooth", block: "start" });
+  setTimeout(() => {
+    try {
+      doDiag();
+    } catch (e) {
+      console.error(e);
+      diagStatus.textContent = "error: " + e.message;
+      diagStatus.style.color = "var(--warn, #b25500)";
+    }
+  }, 30);
+});
+
+function doRun() {
+  const t0 = performance.now();
+  const { eventsBeats } = parseMidi(LOADED.buffer);
+  if (eventsBeats.length === 0) throw new Error("No notes parsed from MIDI.");
+  const binBeats = 1 / 12;
+  const { H, a } = buildChromaBeats(eventsBeats, binBeats);
+  const X = seriesWithRhythm(H, a, 1.0);
+
+  const p = parseInt(document.getElementById('paramP').value, 10);
+  const nmax = parseInt(document.getElementById('paramNmax').value, 10);
+  const K = parseInt(document.getElementById('paramK').value, 10);
+  const Kchild = parseInt(document.getElementById('paramKchild').value, 10);
+  const seed = parseInt(document.getElementById('paramSeed').value, 10);
+  const M = 800, step = 2;
+
+  const out = runHierarchical(X, p, nmax, K, Kchild, M, step, seed);
+  const t1 = performance.now();
+  const elapsed = ((t1 - t0) / 1000).toFixed(2);
+  LAST_RESULT = {
+    p, X, H, eventsBeats, ...out,
+    file: LOADED.name,
+    fingerprint: LOADED.fingerprint,
+    sizeBytes: LOADED.sizeBytes,
+    nNotes: eventsBeats.length,
+    T: X.length,
+    params: { p, nmax, K, Kchild, seed },
+    elapsed,
+    timestamp: new Date().toLocaleTimeString(),
+  };
+  runStatus.textContent = `done in ${elapsed}s · series length ${X.length} · ${eventsBeats.length} notes · p=${p}`;
+  runStatus.style.color = "";
+  renderResults(LAST_RESULT);
+}
+
+/* ----------------------------------------------------------------------------
+   p-arity diagnostic: runs runTowerDiagnostics for p=2 and p=3 and plots
+   the five characteristic curves of Paper 1.
+   ---------------------------------------------------------------------------- */
+
+function doDiag() {
+  const t0 = performance.now();
+  const { eventsBeats } = parseMidi(LOADED.buffer);
+  if (eventsBeats.length === 0) throw new Error("No notes parsed from MIDI.");
+  const { H, a } = buildChromaBeats(eventsBeats, 1 / 12);
+  const X = seriesWithRhythm(H, a, 1.0);
+  const k = parseInt(document.getElementById('diagK').value, 10);
+  const cap = parseInt(document.getElementById('diagCap').value, 10);
+  const nmax = parseInt(document.getElementById('diagNmax').value, 10);
+  const series = {};
+  for (const p of [2, 3]) {
+    series[p] = runTowerDiagnostics(X, p, nmax, k, cap, 2);
+  }
+  const t1 = performance.now();
+  const elapsed = ((t1 - t0) / 1000).toFixed(2);
+  LAST_DIAG = {
+    series,
+    file: LOADED.name,
+    fingerprint: LOADED.fingerprint,
+    nNotes: eventsBeats.length,
+    T: X.length,
+    params: { k, cap, nmax },
+    elapsed,
+    timestamp: new Date().toLocaleTimeString(),
+  };
+  document.getElementById('diagStatus').textContent =
+    `computed in ${elapsed} s · ${eventsBeats.length} notes · T=${X.length}`;
+  renderDiagPanel(LAST_DIAG);
+}
+
+function renderDiagPanel(d) {
+  const dh = document.getElementById('diagHeader');
+  dh.style.display = "";
+  dh.innerHTML = `
+    <div class="rh-title">p-arity diagnostic · ${d.timestamp}</div>
+    <div class="rh-file">file: ${d.file}</div>
+    <div class="rh-meta">${d.nNotes} notes · series T=${d.T} · compute time ${d.elapsed} s</div>
+    <div class="rh-meta">parameters: k=${d.params.k}, cap=${d.params.cap}, N<sub>max</sub>=${d.params.nmax}</div>
+    <div class="rh-fingerprint">SHA fingerprint: ${d.fingerprint}</div>
+  `;
+  renderDiagCharts(d.series);
+  renderDiagSummary(d.series);
+}
+
+function renderDiagSummary(series) {
+  const summary = document.getElementById('diagSummary');
+  function avg(p, key) {
+    let s = 0, c = 0;
+    for (const r of series[p]) { s += r[key]; c++; }
+    return c ? s / c : 0;
+  }
+  const beta2 = avg(2, "beta0"), beta3 = avg(3, "beta0");
+  const lam2 = avg(2, "lambda2"), lam3 = avg(3, "lambda2");
+  const winner_b0 = beta2 < beta3 ? "p=2" : beta2 > beta3 ? "p=3" : "tie";
+  const winner_lam = lam2 > lam3 ? "p=2" : lam2 < lam3 ? "p=3" : "tie";
+  summary.innerHTML =
+    `Means: β₀(p=2)=${beta2.toFixed(2)} vs β₀(p=3)=${beta3.toFixed(2)} (smaller = more connected) → <strong>${winner_b0}</strong> · ` +
+    `λ₂(p=2)=${lam2.toFixed(4)} vs λ₂(p=3)=${lam3.toFixed(4)} (larger = better expansion) → <strong>${winner_lam}</strong>.`;
+}
+
+function _diagSvgChart(seriesByP, key, title, sub) {
+  const W = 320, H = 180;
+  const padL = 38, padR = 8, padT = 8, padB = 28;
+  const ns = seriesByP[2].map(r => r.n);
+  const xs = (n) => padL + ((n - ns[0]) / Math.max(1, ns[ns.length - 1] - ns[0])) * (W - padL - padR);
+  let yMin = Infinity, yMax = -Infinity;
+  for (const p of [2, 3]) for (const r of seriesByP[p]) {
+    yMin = Math.min(yMin, r[key]);
+    yMax = Math.max(yMax, r[key]);
+  }
+  if (yMin === yMax) { yMin -= 0.5; yMax += 0.5; }
+  const span = yMax - yMin;
+  yMin -= span * 0.08; yMax += span * 0.08;
+  const ys = (v) => padT + (1 - (v - yMin) / (yMax - yMin)) * (H - padT - padB);
+  const COLORS = { 2: "#1f77b4", 3: "#ff7f0e" };
+
+  let svg = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="${title}">`;
+  svg += `<line x1="${padL}" y1="${padT}" x2="${padL}" y2="${H - padB}" stroke="#888" stroke-width="0.7"/>`;
+  svg += `<line x1="${padL}" y1="${H - padB}" x2="${W - padR}" y2="${H - padB}" stroke="#888" stroke-width="0.7"/>`;
+  for (let t = 0; t <= 3; t++) {
+    const v = yMin + (yMax - yMin) * (t / 3);
+    const yPos = ys(v);
+    svg += `<line x1="${padL - 3}" y1="${yPos}" x2="${padL}" y2="${yPos}" stroke="#888" stroke-width="0.7"/>`;
+    svg += `<text x="${padL - 5}" y="${yPos + 3}" text-anchor="end" font-size="9" font-family="monospace" fill="#555">${v.toFixed(v < 1 ? 3 : v < 10 ? 2 : 1)}</text>`;
+  }
+  for (const n of ns) {
+    const x = xs(n);
+    svg += `<line x1="${x}" y1="${H - padB}" x2="${x}" y2="${H - padB + 3}" stroke="#888" stroke-width="0.7"/>`;
+    svg += `<text x="${x}" y="${H - padB + 14}" text-anchor="middle" font-size="9" font-family="monospace" fill="#555">${n}</text>`;
+  }
+  svg += `<text x="${(W + padL - padR) / 2}" y="${H - 4}" text-anchor="middle" font-size="9" fill="#555">n (level)</text>`;
+  for (const p of [2, 3]) {
+    const pts = seriesByP[p].map(r => `${xs(r.n)},${ys(r[key])}`).join(" ");
+    svg += `<polyline points="${pts}" fill="none" stroke="${COLORS[p]}" stroke-width="1.5" stroke-linejoin="round"/>`;
+    for (const r of seriesByP[p]) {
+      svg += `<circle cx="${xs(r.n)}" cy="${ys(r[key])}" r="3" fill="${COLORS[p]}" stroke="#fff" stroke-width="0.8"/>`;
+    }
+  }
+  svg += `</svg>`;
+  return `
+    <div class="diag-card">
+      <h4>${title}</h4>
+      <div class="diag-sub">${sub}</div>
+      ${svg}
+    </div>
+  `;
+}
+
+function renderDiagCharts(seriesByP) {
+  const c = document.getElementById('diagCharts');
+  const legend = `
+    <div class="diag-legend" style="grid-column: 1/-1;">
+      <span><span class="lg-dot" style="background:#1f77b4"></span>p=2</span>
+      <span><span class="lg-dot" style="background:#ff7f0e"></span>p=3</span>
+      <span class="small" style="color:var(--muted); margin-left:auto;">
+        five invariants vs level n
+      </span>
+    </div>
+  `;
+  c.innerHTML = legend +
+    _diagSvgChart(seriesByP, "beta0",      "β₀ — connected components",     "smaller = graph is more connected at this level") +
+    _diagSvgChart(seriesByP, "giant_frac", "Giant component fraction",      "size of the largest component / V") +
+    _diagSvgChart(seriesByP, "avg_degree", "avg_degree (2E/V)",             "mean degree of the kNN graph") +
+    _diagSvgChart(seriesByP, "clustering", "Mean clustering",               "Watts–Strogatz local clustering coefficient") +
+    _diagSvgChart(seriesByP, "lambda2",    "λ₂ (Fiedler)",                  "second eigenvalue of the normalized Laplacian");
+}
+
+document.getElementById('diagDownloadCsv').addEventListener('click', () => {
+  if (!LAST_DIAG) return;
+  const cols = ["p","n","N","V","E","avg_degree","beta0","giant_frac","clustering","lambda2"];
+  const rows = [cols.join(",")];
+  for (const p of [2, 3]) {
+    for (const r of LAST_DIAG.series[p]) {
+      rows.push([p, r.n, r.N, r.V, r.E, r.avg_degree.toFixed(4),
+                 r.beta0, r.giant_frac.toFixed(4),
+                 r.clustering.toFixed(4), r.lambda2.toFixed(4)].join(","));
+    }
+  }
+  const blob = new Blob([rows.join("\n")], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `padicmidi_diag_${LAST_DIAG.fingerprint}.csv`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 200);
+});
+
+function renderResults(r) {
+  resultsPanel.style.display = "";
+
+  // Run header: file + fingerprint + parameters. Makes it unambiguous
+  // which run the numbers below belong to; if the user loads a different
+  // file or changes parameters and re-runs, the header changes visibly
+  // even when Coh_pi values happen to coincide with a previous run.
+  const rh = document.getElementById('resultHeader');
+  const sizeKB = (r.sizeBytes / 1024).toFixed(1);
+  rh.innerHTML = `
+    <div class="rh-title">Current run · ${r.timestamp}</div>
+    <div class="rh-file">file: ${r.file}</div>
+    <div class="rh-meta">
+      ${r.nNotes} notes · series T=${r.T} · ${sizeKB} KB ·
+      compute time ${r.elapsed} s
+    </div>
+    <div class="rh-meta">
+      parameters: p=${r.params.p}, N<sub>max</sub>=${r.params.nmax},
+      K=${r.params.K}, K<sub>child</sub>=${r.params.Kchild},
+      seed=${r.params.seed}
+    </div>
+    <div class="rh-fingerprint">SHA fingerprint: ${r.fingerprint}</div>
+  `;
+
+  const tbody = document.querySelector('#cohTable tbody');
+  tbody.innerHTML = "";
+  const floor = 1 / r.p;
+  let onFloor = 0, off = 0;
+  for (const row of r.coh) {
+    const tr = document.createElement('tr');
+    const dev = Math.abs(row.Coh_pi - floor);
+    let pill;
+    if (dev < 0.005) { pill = '<span class="pill good">on floor</span>'; onFloor++; }
+    else if (dev < 0.04) { pill = '<span class="pill">near floor</span>'; }
+    else { pill = '<span class="pill warn">deviates</span>'; off++; }
+    tr.innerHTML = `
+      <td>${row.n}</td>
+      <td>${row.Coh_pi.toFixed(6)}</td>
+      <td>${floor.toFixed(6)}</td>
+      <td>${row.n_samples_n}</td>
+      <td>${row.n_samples_nplus1}</td>
+      <td>${pill}</td>`;
+    tbody.appendChild(tr);
+  }
+  const summary = document.getElementById('cohSummary');
+  summary.textContent =
+    `Levels on floor: ${onFloor}/${r.coh.length} · Levels deviating > 0.04: ${off}/${r.coh.length}`;
+
+  // Informative note when all Coh_pi values are equal or all on the floor:
+  // tells the user this flat result is theoretically expected, not a bug.
+  const note = document.getElementById('floorNote');
+  const allEqual = r.coh.length > 1 && r.coh.every(row =>
+    Math.abs(row.Coh_pi - r.coh[0].Coh_pi) < 1e-9);
+  const allOnFloor = r.coh.length > 1 && onFloor === r.coh.length;
+  if (allOnFloor) {
+    note.style.display = "";
+    note.innerHTML = `
+      <strong>Note:</strong> all three levels lie exactly on the
+      theoretical floor <code>1/p = ${floor.toFixed(3)}</code>. This
+      is what Proposition 3.1 predicts when the piece satisfies the
+      (SC) and (AI) hypotheses for this prime. It is a canonical
+      result, not an error. If you upload another piece with the same
+      metric structure you will get the same numbers — to see contrast,
+      try another prime (e.g. <em>p</em>=3 if you used 2) or a
+      polyphonic demo such as BWV 1079.
+    `;
+  } else if (allEqual) {
+    note.style.display = "";
+    note.innerHTML = `
+      <strong>Note:</strong> the invariant is constant across all
+      levels (<code>${r.coh[0].Coh_pi.toFixed(6)}</code>). It is the
+      genuine value of this new run (check fingerprint and parameters
+      above), but a flat profile cannot distinguish this run from
+      others producing the same number. Change <em>p</em> or load a
+      MIDI with different texture to contrast.
+    `;
+  } else {
+    note.style.display = "none";
+    note.innerHTML = "";
+  }
+
+  setupLevelSelector(r);
+}
+
+/* ----------------------------------------------------------------------------
+   Musical visualisations
+   ---------------------------------------------------------------------------- */
+
+const PITCH_LABELS = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+
+function protoColor(idx, total) {
+  // Categorical palette using the golden angle so adjacent indices are
+  // perceptually distinguishable.
+  const hue = (idx * 137.508) % 360;
+  const sat = 65;
+  const lig = 52 + ((idx % 3) - 1) * 6;
+  return `hsl(${hue.toFixed(1)}, ${sat}%, ${lig}%)`;
+}
+
+function chromaBlue(intensity) {
+  const t = Math.max(0, Math.min(1, intensity));
+  const r = Math.round(247 - 218 * t);
+  const g = Math.round(251 - 178 * t);
+  const b = Math.round(255 - 96 * t);
+  return `rgb(${r},${g},${b})`;
+}
+
+function setupLevelSelector(r) {
+  const sel = document.getElementById('levelSelector');
+  sel.innerHTML = "";
+  const levels = Object.keys(r.protos).map(Number).sort((a, b) => a - b);
+  if (levels.length === 0) return;
+  const initialLevel = levels.find(n => r.protos[n].length >= 2) || levels[0];
+  for (const n of levels) {
+    const btn = document.createElement('button');
+    btn.type = "button";
+    const pn = Math.pow(r.p, n);
+    btn.textContent = `Level n=${n} (W=${pn}, ${r.protos[n].length} prototypes)`;
+    btn.dataset.level = String(n);
+    btn.addEventListener('click', () => {
+      sel.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderMusicalViews(r, n);
+    });
+    if (n === initialLevel) btn.classList.add('active');
+    sel.appendChild(btn);
+  }
+  renderMusicalViews(r, initialLevel);
+}
+
+function renderMusicalViews(r, level) {
+  renderChromaTimeline(r, level);
+  renderPrototypeCatalog(r, level);
+  renderInverseSystem(r, level);
+  renderTree(r, level);
+  setupHeatLevelSelector(r);
+}
+
+/* 4.5 — heatmap of the π transition matrix */
+function setupHeatLevelSelector(r) {
+  const sel = document.getElementById('heatLevel');
+  if (!sel) return;
+  const prev = sel.value ? Number(sel.value) : null;
+  sel.innerHTML = "";
+  const levels = Object.keys(r.protos).map(Number).sort((a, b) => a - b);
+  const validParents = levels.filter(n => r.protos[n + 1] && r.piMaps[n]);
+  if (validParents.length === 0) {
+    document.getElementById('heatContainer').innerHTML =
+      '<p class="small" style="color:#888;">(no π matrix available)</p>';
+    return;
+  }
+  for (const n of validParents) {
+    const opt = document.createElement('option');
+    opt.value = String(n);
+    opt.textContent = `n=${n} → n=${n + 1}  (${r.protos[n].length} × ${r.protos[n + 1].length})`;
+    sel.appendChild(opt);
+  }
+  const initial = (prev !== null && validParents.includes(prev)) ? prev : validParents[0];
+  sel.value = String(initial);
+  sel.onchange = () => renderHeatmap(r, Number(sel.value));
+  renderHeatmap(r, initial);
+}
+
+function renderHeatmap(r, parentLevel) {
+  const cont = document.getElementById('heatContainer');
+  cont.innerHTML = "";
+  const childLevel = parentLevel + 1;
+  if (!r.protos[childLevel] || !r.piMaps[parentLevel]) {
+    cont.innerHTML = '<p class="small" style="color:#888;">(no child level for n=' + parentLevel + ')</p>';
+    return;
+  }
+  const piList = r.piMaps[parentLevel];
+  const totalP = r.protos[parentLevel].length;
+  const totalC = r.protos[childLevel].length;
+  const fmapChi = r.fmaps[childLevel] || {};
+  const fmapPar = r.fmaps[parentLevel] || {};
+  const cntC = new Array(totalC).fill(0);
+  for (const b in fmapChi) cntC[fmapChi[b]]++;
+  const cntP = new Array(totalP).fill(0);
+  for (const b in fmapPar) cntP[fmapPar[b]]++;
+  const rowSum = new Array(totalP).fill(0);
+  for (let c = 0; c < totalC; c++) {
+    const par = piList[c];
+    if (par !== undefined) rowSum[par] += cntC[c];
+  }
+  const maxCell = Math.max(1, ...cntC);
+  const maxRow = Math.max(1, ...rowSum);
+  const cellMax = 22, cellMin = 6;
+  const cell = Math.max(cellMin, Math.min(cellMax, Math.floor(720 / Math.max(totalP, totalC))));
+  const margTop = 28, margLeft = 56;
+  const W = margLeft + totalC * cell + 80;
+  const H = margTop + totalP * cell + 60;
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.setAttribute('width', '100%');
+  svg.style.maxHeight = '480px';
+  const heatColor = (v) => {
+    if (v <= 0) return '#f5f5f5';
+    const t = Math.min(1, v / maxCell);
+    const r0 = 255, g0 = 245, b0 = 230;
+    const r1 = 179, g1 = 0,   b1 = 0;
+    const R = Math.round(r0 + (r1 - r0) * t);
+    const G = Math.round(g0 + (g1 - g0) * t);
+    const B = Math.round(b0 + (b1 - b0) * t);
+    return `rgb(${R},${G},${B})`;
+  };
+  for (let c = 0; c < totalC; c++) {
+    const x = margLeft + c * cell;
+    const v = cntC[c];
+    const h = (margTop - 4) * (v / maxCell);
+    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    rect.setAttribute('x', x); rect.setAttribute('y', margTop - h - 2);
+    rect.setAttribute('width', cell - 1);
+    rect.setAttribute('height', Math.max(0.5, h));
+    rect.setAttribute('fill', '#666');
+    rect.setAttribute('opacity', v === 0 ? 0.15 : 0.8);
+    svg.appendChild(rect);
+  }
+  for (let i = 0; i < totalP; i++) {
+    for (let c = 0; c < totalC; c++) {
+      const par = piList[c];
+      const x = margLeft + c * cell;
+      const y = margTop + i * cell;
+      const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      rect.setAttribute('x', x); rect.setAttribute('y', y);
+      rect.setAttribute('width', cell - 1);
+      rect.setAttribute('height', cell - 1);
+      const isLink = (par === i);
+      rect.setAttribute('fill', isLink ? heatColor(cntC[c]) : '#fafafa');
+      rect.setAttribute('stroke', '#fff');
+      rect.setAttribute('stroke-width', 0.4);
+      const titleEl = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+      titleEl.textContent = isLink
+        ? `parent P${i} → child C${c} · ${cntC[c]} windows`
+        : `(no edge) parent P${i}, child C${c}`;
+      rect.appendChild(titleEl);
+      svg.appendChild(rect);
+      if (isLink && cntC[c] > 0 && cell >= 14) {
+        const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        t.setAttribute('x', x + cell / 2); t.setAttribute('y', y + cell / 2 + 3);
+        t.setAttribute('font-size', Math.min(10, cell - 4));
+        t.setAttribute('fill', cntC[c] / maxCell > 0.55 ? '#fff' : '#222');
+        t.setAttribute('text-anchor', 'middle');
+        t.textContent = String(cntC[c]);
+        svg.appendChild(t);
+      }
+    }
+  }
+  const margRightW = 70;
+  const xMR = margLeft + totalC * cell + 4;
+  for (let i = 0; i < totalP; i++) {
+    const v = rowSum[i];
+    const w = margRightW * (v / maxRow);
+    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    rect.setAttribute('x', xMR); rect.setAttribute('y', margTop + i * cell);
+    rect.setAttribute('width', Math.max(0.5, w));
+    rect.setAttribute('height', cell - 1);
+    rect.setAttribute('fill', '#1f6feb');
+    rect.setAttribute('opacity', v === 0 ? 0.15 : 0.75);
+    svg.appendChild(rect);
+    if (cell >= 12 && v > 0) {
+      const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      t.setAttribute('x', xMR + w + 2); t.setAttribute('y', margTop + i * cell + cell / 2 + 3);
+      t.setAttribute('font-size', 9); t.setAttribute('fill', '#444');
+      t.textContent = String(v);
+      svg.appendChild(t);
+    }
+  }
+  if (cell >= 10) {
+    for (let i = 0; i < totalP; i++) {
+      const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      t.setAttribute('x', margLeft - 4); t.setAttribute('y', margTop + i * cell + cell / 2 + 3);
+      t.setAttribute('font-size', Math.min(10, cell - 2)); t.setAttribute('fill', '#666');
+      t.setAttribute('text-anchor', 'end');
+      t.textContent = `P${i}`;
+      svg.appendChild(t);
+    }
+  }
+  const elabel = (txt, x, y, anchor = 'start', size = 10, color = '#666') => {
+    const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    t.setAttribute('x', x); t.setAttribute('y', y); t.setAttribute('font-size', size);
+    t.setAttribute('fill', color); t.setAttribute('text-anchor', anchor);
+    t.textContent = txt; svg.appendChild(t);
+  };
+  elabel(`children S_${childLevel}  (top marginal: windows/child, max ${maxCell})`,
+         margLeft, margTop + totalP * cell + 18, 'start', 10);
+  elabel(`parents S_${parentLevel}`, 6, margTop - 6, 'start', 10);
+  elabel(`parent marginal →  max ${maxRow}`, xMR, margTop - 6, 'start', 10);
+  const cohRow = r.coh.find(x => x.n === parentLevel);
+  const cohTxt = cohRow ? `Coh_π(${r.p},${parentLevel}) = ${cohRow.Coh_pi.toFixed(4)}` : '';
+  elabel(`${cohTxt}   ·   theoretical floor 1/p = ${(1 / r.p).toFixed(4)}`,
+         W - 6, H - 8, 'end', 10, '#444');
+  cont.appendChild(svg);
+  const totalWin = cntC.reduce((a, b) => a + b, 0);
+  const usedC = cntC.filter(x => x > 0).length;
+  const usedP = rowSum.filter(x => x > 0).length;
+  const stats = document.getElementById('heatStats');
+  if (stats) {
+    stats.innerHTML =
+      `${usedP}/${totalP} parents with descendants · ` +
+      `${usedC}/${totalC} children populated · ` +
+      `${totalWin} windows in S<sub>${childLevel}</sub>`;
+  }
+}
+
+/* 4.1 — temporal chromagram coloured by prototype */
+function renderChromaTimeline(r, level) {
+  const canvas = document.getElementById('canvasTimeline');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  drawProtoHighlight(null);
+
+  const X = r.X;
+  if (!X || X.length === 0) return;
+  const T = X.length;
+  const p = r.p;
+  const wn = Math.pow(p, level);
+
+  const padL = 22, padR = 6, padT = 4, bandH = 26, gap = 4;
+  const chartW = W - padL - padR;
+  const chartH = H - padT - bandH - gap - 14;
+  const cellH = chartH / 12;
+  const colW = chartW / T;
+  for (let t = 0; t < T; t++) {
+    const x = padL + t * colW;
+    for (let k = 0; k < 12; k++) {
+      const v = X[t][k] || 0;
+      const intensity = Math.min(1, v);
+      ctx.fillStyle = chromaBlue(intensity);
+      const y = padT + (11 - k) * cellH;
+      ctx.fillRect(x, y, Math.max(1, colW + 0.5), cellH + 0.5);
+    }
+  }
+  ctx.fillStyle = "#888";
+  ctx.font = "9px ui-monospace, Menlo, monospace";
+  ctx.textBaseline = "middle";
+  for (let k = 0; k < 12; k++) {
+    const y = padT + (11 - k) * cellH + cellH / 2;
+    ctx.fillText(PITCH_LABELS[k], 2, y);
+  }
+
+  const fmap = r.fmaps[level] || {};
+  const total = r.protos[level].length;
+  const bandY = padT + chartH + gap;
+  ctx.fillStyle = "#e3e3e6";
+  ctx.fillRect(padL, bandY - 1, chartW, 1);
+  const bs = Object.keys(fmap).map(Number).sort((a, b) => a - b);
+  for (let i = 0; i < bs.length; i++) {
+    const b = bs[i];
+    const next = bs[i + 1] !== undefined ? bs[i + 1] : Math.min(T, b + wn);
+    const x0 = padL + b * colW;
+    const x1 = padL + Math.min(T, next) * colW;
+    const proto = fmap[b];
+    ctx.fillStyle = protoColor(proto, total);
+    ctx.fillRect(x0, bandY, Math.max(1, x1 - x0), bandH);
+  }
+
+  ctx.fillStyle = "#444";
+  ctx.font = "10px -apple-system, sans-serif";
+  ctx.textBaseline = "top";
+  ctx.fillText(`assigned prototype · n=${level} · window=${wn}`, padL + 2, bandY + bandH + 2);
+
+  const legend = document.getElementById('timelineLegend');
+  legend.innerHTML = "";
+  const counts = new Array(total).fill(0);
+  for (const b of bs) counts[fmap[b]]++;
+  for (let i = 0; i < total; i++) {
+    const span = document.createElement('span');
+    span.innerHTML = `<span class="legend-swatch" style="background:${protoColor(i, total)}"></span>P${i} <span style="color:#999">(${counts[i]})</span>`;
+    legend.appendChild(span);
+  }
+}
+
+/* 4.2 — prototype catalogue as chromatic heatmaps. Cards are interactive:
+   hover highlights the windows quantised by that prototype on the 4.1
+   chromogram; clicking seeks the player to the first such window and
+   starts playback. This closes the visual ↔ aural loop. */
+let CURRENT_RESULT = null;
+let CURRENT_LEVEL = null;
+let HIGHLIGHTED_PROTO = null;
+
+function renderPrototypeCatalog(r, level) {
+  CURRENT_RESULT = r;
+  CURRENT_LEVEL = level;
+  HIGHLIGHTED_PROTO = null;
+  const grid = document.getElementById('protoGrid');
+  grid.innerHTML = "";
+  const protos = r.protos[level] || [];
+  const total = protos.length;
+  const fmap = r.fmaps[level] || {};
+  const counts = new Array(total).fill(0);
+  for (const b in fmap) counts[fmap[b]]++;
+  const piList = (level > 1) ? r.piMaps[level - 1] : null;
+
+  for (let i = 0; i < total; i++) {
+    const proto = protos[i];
+    const N = proto.length;
+    const card = document.createElement('div');
+    card.className = 'proto-card';
+    card.dataset.protoId = String(i);
+    card.style.cursor = counts[i] > 0 ? 'pointer' : 'not-allowed';
+    if (counts[i] === 0) card.style.opacity = '0.5';
+    card.title = counts[i] > 0
+      ? `Hover: highlight windows on 4.1. Click: play from the first window.`
+      : `Formal prototype with no assigned windows.`;
+
+    const header = document.createElement('div');
+    header.className = 'proto-tag';
+    header.innerHTML =
+      `<span class="swatch" style="background:${protoColor(i, total)}"></span>` +
+      `<span>P${i}</span>`;
+    card.appendChild(header);
+
+    const cellW = 8, cellH = 8;
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(svgNS, 'svg');
+    svg.setAttribute('width', N * cellW);
+    svg.setAttribute('height', 12 * cellH);
+    svg.setAttribute('viewBox', `0 0 ${N * cellW} ${12 * cellH}`);
+    svg.style.background = '#fafbfc';
+    for (let t = 0; t < N; t++) {
+      for (let k = 0; k < 12; k++) {
+        const v = proto[t][k] || 0;
+        const rect = document.createElementNS(svgNS, 'rect');
+        rect.setAttribute('x', t * cellW);
+        rect.setAttribute('y', (11 - k) * cellH);
+        rect.setAttribute('width', cellW);
+        rect.setAttribute('height', cellH);
+        rect.setAttribute('fill', chromaBlue(Math.min(1, v)));
+        svg.appendChild(rect);
+      }
+    }
+    card.appendChild(svg);
+
+    const meta = document.createElement('div');
+    meta.className = 'proto-meta';
+    let parentTxt = '';
+    if (piList && piList[i] !== undefined) parentTxt = ` · π → P${piList[i]}`;
+    meta.textContent = `${counts[i]} windows${parentTxt}`;
+    card.appendChild(meta);
+
+    if (counts[i] > 0) {
+      card.addEventListener('mouseenter', () => {
+        HIGHLIGHTED_PROTO = i;
+        drawProtoHighlight(r, level, i);
+        card.style.outline = `2px solid ${protoColor(i, total)}`;
+      });
+      card.addEventListener('mouseleave', () => {
+        if (HIGHLIGHTED_PROTO === i) {
+          HIGHLIGHTED_PROTO = null;
+          drawProtoHighlight(null);
+        }
+        card.style.outline = '';
+      });
+      card.addEventListener('click', () => {
+        const wins = windowsForProto(r, level, i);
+        if (wins.length === 0) return;
+        const dur = AUDIO_PLAYER.duration;
+        const T = (r.X || []).length;
+        if (dur <= 0 || T === 0) return;
+        const t0 = (wins[0].b / T) * dur;
+        AUDIO_PLAYER.seek(Math.max(0, t0 - 0.05));
+        AUDIO_PLAYER.play();
+      });
+    }
+    grid.appendChild(card);
+  }
+}
+
+function windowsForProto(r, level, protoId) {
+  const fmap = r.fmaps[level] || {};
+  const wn = Math.pow(r.p, level);
+  const bs = Object.keys(fmap).map(Number).sort((a, b) => a - b);
+  const T = (r.X || []).length;
+  const out = [];
+  for (let i = 0; i < bs.length; i++) {
+    const b = bs[i];
+    if (fmap[b] !== protoId) continue;
+    const next = bs[i + 1] !== undefined ? bs[i + 1] : Math.min(T, b + wn);
+    out.push({ b, b1: Math.min(T, next) });
+  }
+  return out;
+}
+
+function drawProtoHighlight(r, level, protoId) {
+  const canvas = document.getElementById('canvasTimeline');
+  if (!canvas) return;
+  const wrap = canvas.parentNode;
+  if (!wrap) return;
+  let layer = document.getElementById('canvasTimelineHighlight');
+  if (!layer) {
+    layer = document.createElement('div');
+    layer.id = 'canvasTimelineHighlight';
+    layer.style.position = 'absolute';
+    layer.style.top = '0'; layer.style.left = '0';
+    layer.style.right = '0'; layer.style.bottom = '0';
+    layer.style.pointerEvents = 'none';
+    wrap.style.position = 'relative';
+    wrap.appendChild(layer);
+  }
+  layer.innerHTML = "";
+  if (r === null || protoId === null || protoId === undefined) return;
+  const wins = windowsForProto(r, level, protoId);
+  if (wins.length === 0) return;
+  const T = (r.X || []).length;
+  if (T === 0) return;
+  const total = (r.protos[level] || []).length;
+  const color = protoColor(protoId, total);
+  const canvasW = canvas.width || 900;
+  const padLpct = (22 / canvasW) * 100;
+  const usable = 100 - padLpct - (6 / canvasW) * 100;
+  const minPxWidth = 8;
+  for (const w of wins) {
+    const xp = padLpct + usable * (w.b / T);
+    const wpRaw = usable * Math.max(1, (w.b1 - w.b)) / T;
+    const div = document.createElement('div');
+    div.style.position = 'absolute';
+    div.style.left = `calc(${xp}% - 1px)`;
+    div.style.top = '0';
+    div.style.width = `max(${minPxWidth}px, ${wpRaw}%)`;
+    div.style.height = '100%';
+    div.style.background = color;
+    div.style.opacity = '0.40';
+    div.style.borderLeft = `2px solid ${color}`;
+    div.style.borderRight = `2px solid ${color}`;
+    div.style.boxShadow = `0 0 6px ${color}`;
+    layer.appendChild(div);
+  }
+  const tag = document.createElement('div');
+  tag.style.position = 'absolute';
+  tag.style.right = '8px'; tag.style.top = '6px';
+  tag.style.background = color; tag.style.color = '#fff';
+  tag.style.fontSize = '11px'; tag.style.padding = '2px 6px';
+  tag.style.borderRadius = '4px'; tag.style.fontWeight = '600';
+  tag.textContent = `P${protoId} · ${wins.length} window${wins.length === 1 ? '' : 's'}`;
+  layer.appendChild(tag);
+}
+
+/* 4.3 — inverse system π as a Sankey-like diagram with weighted blocks/edges */
+function renderInverseSystem(r, level) {
+  const svg = document.getElementById('svgInverse');
+  while (svg.firstChild) svg.removeChild(svg.firstChild);
+  const W = 900, H = 280;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+
+  const levels = Object.keys(r.protos).map(Number).sort((a, b) => a - b);
+  const maxLevel = levels[levels.length - 1];
+  const childLevel = (level < maxLevel) ? level + 1 : level;
+  const parentLevel = childLevel - 1;
+  if (parentLevel < 1 || !r.protos[parentLevel] || !r.protos[childLevel]) {
+    const note = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    note.setAttribute('x', 12); note.setAttribute('y', 30);
+    note.setAttribute('font-size', 12); note.setAttribute('fill', '#888');
+    note.textContent = `(no inverse system available at this level)`;
+    svg.appendChild(note);
+    return;
+  }
+  const piList = r.piMaps[parentLevel] || [];
+  const parents = r.protos[parentLevel];
+  const children = r.protos[childLevel];
+
+  const padL = 80, padR = 80;
+  const yTop = 50, yBot = H - 56;
+  const xPar = (i) => padL + (W - padL - padR) * (i + 0.5) / parents.length;
+  const xChi = (i) => padL + (W - padL - padR) * (i + 0.5) / children.length;
+  const totalP = parents.length, totalC = children.length;
+
+  const fmapPar = r.fmaps[parentLevel] || {};
+  const fmapChi = r.fmaps[childLevel] || {};
+  const cntP = new Array(totalP).fill(0);
+  const cntC = new Array(totalC).fill(0);
+  for (const b in fmapPar) cntP[fmapPar[b]]++;
+  for (const b in fmapChi) cntC[fmapChi[b]]++;
+  const maxCntP = Math.max(1, ...cntP);
+  const maxCntC = Math.max(1, ...cntC);
+  const maxFlow = maxCntC;
+
+  for (let c = 0; c < piList.length; c++) {
+    const par = piList[c];
+    if (par === undefined) continue;
+    const x1 = xPar(par), x2 = xChi(c);
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    const cy1 = yTop + 8, cy2 = yBot - 8;
+    const midY = (cy1 + cy2) / 2;
+    path.setAttribute('d', `M${x1},${cy1} C${x1},${midY} ${x2},${midY} ${x2},${cy2}`);
+    path.setAttribute('stroke', protoColor(par, totalP));
+    const flow = cntC[c] || 0;
+    path.setAttribute('stroke-width', (0.4 + 6.6 * (flow / Math.max(1, maxFlow))).toFixed(2));
+    path.setAttribute('fill', 'none');
+    path.setAttribute('opacity', flow === 0 ? 0.12 : (0.35 + 0.55 * flow / maxFlow).toFixed(2));
+    svg.appendChild(path);
+  }
+
+  const baseH = 6, maxH = 28;
+  const nodeW = Math.min(28, (W - padL - padR) / Math.max(1, totalP) * 0.7);
+  for (let i = 0; i < totalP; i++) {
+    const x = xPar(i);
+    const cnt = cntP[i] || 0;
+    const h = baseH + (maxH - baseH) * (cnt / maxCntP);
+    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    rect.setAttribute('x', x - nodeW / 2);
+    rect.setAttribute('y', yTop - h / 2);
+    rect.setAttribute('width', nodeW);
+    rect.setAttribute('height', h);
+    rect.setAttribute('rx', 2);
+    rect.setAttribute('fill', protoColor(i, totalP));
+    rect.setAttribute('opacity', cnt === 0 ? 0.25 : 1.0);
+    svg.appendChild(rect);
+    const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    txt.setAttribute('x', x); txt.setAttribute('y', yTop - h / 2 - 8);
+    txt.setAttribute('font-size', totalP > 24 ? 7 : 9);
+    txt.setAttribute('fill', '#666');
+    txt.setAttribute('text-anchor', 'middle');
+    txt.textContent = totalP > 36 ? `${cnt}` : `P${i}·${cnt}`;
+    svg.appendChild(txt);
+  }
+  const baseHc = 5, maxHc = 22;
+  const nodeWc = Math.min(20, (W - padL - padR) / Math.max(1, totalC) * 0.7);
+  for (let i = 0; i < totalC; i++) {
+    const x = xChi(i);
+    const par = piList[i] !== undefined ? piList[i] : 0;
+    const cnt = cntC[i] || 0;
+    const h = baseHc + (maxHc - baseHc) * (cnt / maxCntC);
+    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    rect.setAttribute('x', x - nodeWc / 2);
+    rect.setAttribute('y', yBot - h / 2);
+    rect.setAttribute('width', nodeWc);
+    rect.setAttribute('height', h);
+    rect.setAttribute('rx', 2);
+    rect.setAttribute('fill', protoColor(par, totalP));
+    rect.setAttribute('opacity', cnt === 0 ? 0.20 : 0.95);
+    svg.appendChild(rect);
+    if (totalC <= 48 && cnt > 0) {
+      const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      t.setAttribute('x', x); t.setAttribute('y', yBot + h / 2 + 9);
+      t.setAttribute('font-size', totalC > 24 ? 7 : 8);
+      t.setAttribute('fill', '#666');
+      t.setAttribute('text-anchor', 'middle');
+      t.textContent = `${cnt}`;
+      svg.appendChild(t);
+    }
+  }
+
+  const lblL = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  lblL.setAttribute('x', 6); lblL.setAttribute('y', yTop + 2);
+  lblL.setAttribute('font-size', 11); lblL.setAttribute('fill', '#444');
+  lblL.textContent = `S_${parentLevel} (n=${parentLevel}, ${totalP} prototypes)`;
+  svg.appendChild(lblL);
+  const lblR = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  lblR.setAttribute('x', 6); lblR.setAttribute('y', yBot + 4);
+  lblR.setAttribute('font-size', 11); lblR.setAttribute('fill', '#444');
+  lblR.textContent = `S_${childLevel} (n=${childLevel}, ${totalC} prototypes)`;
+  svg.appendChild(lblR);
+
+  const consistent = (() => {
+    const pn = Math.pow(r.p, parentLevel);
+    let m = 0, total = 0;
+    for (const b in fmapChi) {
+      const par_quant = fmapPar[b % pn];
+      const par_via_pi = piList[fmapChi[b]];
+      if (par_quant === undefined) continue;
+      total++;
+      if (par_quant === par_via_pi) m++;
+    }
+    return total > 0 ? (m / total) : 0;
+  })();
+  const cohRow = r.coh.find(x => x.n === parentLevel);
+  const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  txt.setAttribute('x', W - 6); txt.setAttribute('y', yBot + 22);
+  txt.setAttribute('font-size', 10); txt.setAttribute('fill', '#666');
+  txt.setAttribute('text-anchor', 'end');
+  const cohTxt = cohRow ? `Coh_π(${r.p},${parentLevel}) = ${cohRow.Coh_pi.toFixed(4)}` : `sample consistency = ${consistent.toFixed(3)}`;
+  txt.textContent = cohTxt + `   ·   floor 1/p = ${(1/r.p).toFixed(4)}`;
+  svg.appendChild(txt);
+}
+
+/* 4.4 — full p-adic tree with inherited edges + node sizes proportional to
+   the number of windows assigned (turns the regular tree into a load map). */
+function renderTree(r, _highlightLevel) {
+  const container = document.getElementById('treeContainer');
+  container.innerHTML = "";
+  const levels = Object.keys(r.protos).map(Number).sort((a, b) => a - b);
+  if (levels.length === 0) return;
+  const W = 920, H = 360;
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.setAttribute('width', '100%');
+  svg.style.maxHeight = '360px';
+  const yStep = (H - 60) / levels.length;
+
+  const ancestor = {};
+  ancestor[1] = r.protos[1].map((_, i) => i);
+  for (let n = 1; n < levels[levels.length - 1]; n++) {
+    const piList = r.piMaps[n];
+    if (!piList) break;
+    const arr = [];
+    for (let c = 0; c < piList.length; c++) {
+      const par = piList[c];
+      arr.push(ancestor[n][par] !== undefined ? ancestor[n][par] : 0);
+    }
+    ancestor[n + 1] = arr;
+  }
+  const totalRoots = r.protos[1].length;
+
+  const cnt = {};
+  const maxCnt = {};
+  for (const n of levels) {
+    const total = r.protos[n].length;
+    const c = new Array(total).fill(0);
+    const fmap = r.fmaps[n] || {};
+    for (const b in fmap) c[fmap[b]]++;
+    cnt[n] = c;
+    maxCnt[n] = Math.max(1, ...c);
+  }
+
+  const positions = {};
+  for (let li = 0; li < levels.length; li++) {
+    const n = levels[li];
+    const count = r.protos[n].length;
+    positions[n] = [];
+    const y = 30 + li * yStep;
+    const xStep = (W - 60) / (count + 1);
+    for (let i = 0; i < count; i++) {
+      const x = 50 + (i + 1) * xStep;
+      positions[n].push({ x, y, id: i });
+    }
+    const lbl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    lbl.setAttribute('x', 6); lbl.setAttribute('y', y + 4);
+    lbl.setAttribute('font-size', 11); lbl.setAttribute('fill', '#666');
+    lbl.textContent = `S${n}`;
+    svg.appendChild(lbl);
+    const tot = cnt[n].reduce((a, b) => a + b, 0);
+    const used = cnt[n].filter(x => x > 0).length;
+    const tot_lbl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    tot_lbl.setAttribute('x', W - 6); tot_lbl.setAttribute('y', y + 4);
+    tot_lbl.setAttribute('font-size', 9); tot_lbl.setAttribute('fill', '#999');
+    tot_lbl.setAttribute('text-anchor', 'end');
+    tot_lbl.textContent = `${used}/${count} used · ${tot} windows`;
+    svg.appendChild(tot_lbl);
+  }
+  for (let n = 1; n < levels[levels.length - 1]; n++) {
+    const piList = r.piMaps[n];
+    if (!piList) continue;
+    const maxC = maxCnt[n + 1];
+    for (let child = 0; child < piList.length; child++) {
+      const par = piList[child];
+      const pPos = positions[n] && positions[n][par];
+      const cPos = positions[n + 1] && positions[n + 1][child];
+      if (!pPos || !cPos) continue;
+      const flow = cnt[n + 1][child];
+      const ln = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      ln.setAttribute('x1', pPos.x); ln.setAttribute('y1', pPos.y);
+      ln.setAttribute('x2', cPos.x); ln.setAttribute('y2', cPos.y);
+      ln.setAttribute('stroke', protoColor(ancestor[n][par], totalRoots));
+      ln.setAttribute('stroke-width', (0.4 + 2.0 * (flow / maxC)).toFixed(2));
+      ln.setAttribute('opacity', flow === 0 ? 0.10 : (0.30 + 0.55 * flow / maxC).toFixed(2));
+      svg.appendChild(ln);
+    }
+  }
+  for (let li = 0; li < levels.length; li++) {
+    const n = levels[li];
+    const count = r.protos[n].length;
+    const maxC = maxCnt[n];
+    for (let i = 0; i < count; i++) {
+      const pos = positions[n][i];
+      const k = cnt[n][i];
+      const baseR = count > 64 ? 1.4 : (count > 32 ? 2.0 : 2.6);
+      const rad = baseR + 6.4 * Math.sqrt(k / maxC);
+      const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      c.setAttribute('cx', pos.x); c.setAttribute('cy', pos.y);
+      c.setAttribute('r', rad.toFixed(2));
+      c.setAttribute('fill', protoColor(ancestor[n][i] !== undefined ? ancestor[n][i] : 0, totalRoots));
+      c.setAttribute('stroke', 'white'); c.setAttribute('stroke-width', 0.5);
+      c.setAttribute('opacity', k === 0 ? 0.30 : 1.0);
+      const titleEl = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+      titleEl.textContent = `S${n} · prototype ${i} · ${k} windows`;
+      c.appendChild(titleEl);
+      svg.appendChild(c);
+      if (count <= 24 && k > 0) {
+        const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        t.setAttribute('x', pos.x); t.setAttribute('y', pos.y - rad - 3);
+        t.setAttribute('font-size', 8); t.setAttribute('fill', '#555');
+        t.setAttribute('text-anchor', 'middle');
+        t.textContent = `${k}`;
+        svg.appendChild(t);
+      }
+    }
+  }
+  container.appendChild(svg);
+}
+
+document.getElementById('downloadCsv').addEventListener('click', () => {
+  if (!LAST_RESULT) return;
+  const lines = ["n,Coh_pi,n_samples_n,n_samples_nplus1"];
+  for (const row of LAST_RESULT.coh) {
+    lines.push(`${row.n},${row.Coh_pi.toFixed(6)},${row.n_samples_n},${row.n_samples_nplus1}`);
+  }
+  const blob = new Blob([lines.join("\n") + "\n"], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `coherence_p${LAST_RESULT.p}.csv`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 100);
+});
+
+function base64ToArrayBuffer(b64) {
+  const binStr = atob(b64);
+  const len = binStr.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) bytes[i] = binStr.charCodeAt(i);
+  return bytes.buffer;
+}
+
+// BWV 1007 demo MIDI bytes (base64). Replaced at build time by snapshot_version.sh
+// with the real bytes; this placeholder makes the applet usable even before
+// the bundling step runs.
+
+/* ============================================================================
+   Bundled demos (base64). Four real or project-built MIDI files:
+     - BWV1007_BASE64    : Bach Cello Suite no. 1, prelude (monophonic)
+     - TOY_BINARY_BASE64 : project-built synthetic, satisfies (SC)+(AI) at p=2
+     - TOY_TERNARY_BASE64: project-built synthetic, satisfies (SC)+(AI) at p=3
+     - CRAB_CANON_BASE64 : Crab canon from BWV 1079 (polyphonic)
+   ============================================================================ */
+
+const TOY_BINARY_BASE64 = "TVRoZAAAAAYAAQABAeBNVHJrAAAGCwD/UQMHoSAAkDxGAEBGAENGgRCAPAAAQAAAQwBgkDxGAEBGAENGgRCAPAAAQAAAQwBgkDxGAEBGAENGgRCAPAAAQAAAQwBgkDxGAEBGAENGgRCAPAAAQAAAQwBgkDxGAEBGAENGgRCAPAAAQAAAQwBgkDxGAEBGAENGgRCAPAAAQAAAQwBgkDxGAEBGAENGgRCAPAAAQAAAQwBgkDxGAEBGAENGgRCAPAAAQAAAQwBgkENGAEdGAEpGAE1GgRCAQwAARwAASgAATQBgkENGAEdGAEpGAE1GgRCAQwAARwAASgAATQBgkENGAEdGAEpGAE1GgRCAQwAARwAASgAATQBgkENGAEdGAEpGAE1GgRCAQwAARwAASgAATQBgkENGAEdGAEpGAE1GgRCAQwAARwAASgAATQBgkENGAEdGAEpGAE1GgRCAQwAARwAASgAATQBgkENGAEdGAEpGAE1GgRCAQwAARwAASgAATQBgkENGAEdGAEpGAE1GgRCAQwAARwAASgAATQBgkDxGAEBGAENGgRCAPAAAQAAAQwBgkDxGAEBGAENGgRCAPAAAQAAAQwBgkDxGAEBGAENGgRCAPAAAQAAAQwBgkDxGAEBGAENGgRCAPAAAQAAAQwBgkDxGAEBGAENGgRCAPAAAQAAAQwBgkDxGAEBGAENGgRCAPAAAQAAAQwBgkDxGAEBGAENGgRCAPAAAQAAAQwBgkDxGAEBGAENGgRCAPAAAQAAAQwBgkENGAEdGAEpGAE1GgRCAQwAARwAASgAATQBgkENGAEdGAEpGAE1GgRCAQwAARwAASgAATQBgkENGAEdGAEpGAE1GgRCAQwAARwAASgAATQBgkENGAEdGAEpGAE1GgRCAQwAARwAASgAATQBgkENGAEdGAEpGAE1GgRCAQwAARwAASgAATQBgkENGAEdGAEpGAE1GgRCAQwAARwAASgAATQBgkENGAEdGAEpGAE1GgRCAQwAARwAASgAATQBgkENGAEdGAEpGAE1GgRCAQwAARwAASgAATQBgkDxGAEBGAENGgRCAPAAAQAAAQwBgkDxGAEBGAENGgRCAPAAAQAAAQwBgkDxGAEBGAENGgRCAPAAAQAAAQwBgkDxGAEBGAENGgRCAPAAAQAAAQwBgkDxGAEBGAENGgRCAPAAAQAAAQwBgkDxGAEBGAENGgRCAPAAAQAAAQwBgkDxGAEBGAENGgRCAPAAAQAAAQwBgkDxGAEBGAENGgRCAPAAAQAAAQwBgkENGAEdGAEpGAE1GgRCAQwAARwAASgAATQBgkENGAEdGAEpGAE1GgRCAQwAARwAASgAATQBgkENGAEdGAEpGAE1GgRCAQwAARwAASgAATQBgkENGAEdGAEpGAE1GgRCAQwAARwAASgAATQBgkENGAEdGAEpGAE1GgRCAQwAARwAASgAATQBgkENGAEdGAEpGAE1GgRCAQwAARwAASgAATQBgkENGAEdGAEpGAE1GgRCAQwAARwAASgAATQBgkENGAEdGAEpGAE1GgRCAQwAARwAASgAATQBgkDxGAEBGAENGgRCAPAAAQAAAQwBgkDxGAEBGAENGgRCAPAAAQAAAQwBgkDxGAEBGAENGgRCAPAAAQAAAQwBgkDxGAEBGAENGgRCAPAAAQAAAQwBgkDxGAEBGAENGgRCAPAAAQAAAQwBgkDxGAEBGAENGgRCAPAAAQAAAQwBgkDxGAEBGAENGgRCAPAAAQAAAQwBgkDxGAEBGAENGgRCAPAAAQAAAQwBgkENGAEdGAEpGAE1GgRCAQwAARwAASgAATQBgkENGAEdGAEpGAE1GgRCAQwAARwAASgAATQBgkENGAEdGAEpGAE1GgRCAQwAARwAASgAATQBgkENGAEdGAEpGAE1GgRCAQwAARwAASgAATQBgkENGAEdGAEpGAE1GgRCAQwAARwAASgAATQBgkENGAEdGAEpGAE1GgRCAQwAARwAASgAATQBgkENGAEdGAEpGAE1GgRCAQwAARwAASgAATQBgkENGAEdGAEpGAE1GgRCAQwAARwAASgAATQAA/y8A";
+
+const TOY_TERNARY_BASE64 = "TVRoZAAAAAYAAQABAeBNVHJrAAAIGwD/UQMHoSAAkDw8AEA8AEM8JoA8AABAAABDAHqQPFIAQFIAQ1ImgDwAAEAAAEMAepA8aABAaABDaCaAPAAAQAAAQwB6kDw8AEA8AEM8JoA8AABAAABDAHqQPFIAQFIAQ1ImgDwAAEAAAEMAepA8aABAaABDaCaAPAAAQAAAQwB6kDw8AEA8AEM8JoA8AABAAABDAHqQPFIAQFIAQ1ImgDwAAEAAAEMAepA8aABAaABDaCaAPAAAQAAAQwB6kDw8AEA8AEM8JoA8AABAAABDAHqQPFIAQFIAQ1ImgDwAAEAAAEMAepA8aABAaABDaCaAPAAAQAAAQwB6kEE8AEU8AEg8JoBBAABFAABIAHqQQVIARVIASFImgEEAAEUAAEgAepBBaABFaABIaCaAQQAARQAASAB6kEE8AEU8AEg8JoBBAABFAABIAHqQQVIARVIASFImgEEAAEUAAEgAepBBaABFaABIaCaAQQAARQAASAB6kEE8AEU8AEg8JoBBAABFAABIAHqQQVIARVIASFImgEEAAEUAAEgAepBBaABFaABIaCaAQQAARQAASAB6kEE8AEU8AEg8JoBBAABFAABIAHqQQVIARVIASFImgEEAAEUAAEgAepBBaABFaABIaCaAQQAARQAASAB6kEM8AEc8AEo8AE08JoBDAABHAABKAABNAHqQQ1IAR1IASlIATVImgEMAAEcAAEoAAE0AepBDaABHaABKaABNaCaAQwAARwAASgAATQB6kEM8AEc8AEo8AE08JoBDAABHAABKAABNAHqQQ1IAR1IASlIATVImgEMAAEcAAEoAAE0AepBDaABHaABKaABNaCaAQwAARwAASgAATQB6kEM8AEc8AEo8AE08JoBDAABHAABKAABNAHqQQ1IAR1IASlIATVImgEMAAEcAAEoAAE0AepBDaABHaABKaABNaCaAQwAARwAASgAATQB6kEM8AEc8AEo8AE08JoBDAABHAABKAABNAHqQQ1IAR1IASlIATVImgEMAAEcAAEoAAE0AepBDaABHaABKaABNaCaAQwAARwAASgAATQB6kDw8AEA8AEM8JoA8AABAAABDAHqQPFIAQFIAQ1ImgDwAAEAAAEMAepA8aABAaABDaCaAPAAAQAAAQwB6kDw8AEA8AEM8JoA8AABAAABDAHqQPFIAQFIAQ1ImgDwAAEAAAEMAepA8aABAaABDaCaAPAAAQAAAQwB6kDw8AEA8AEM8JoA8AABAAABDAHqQPFIAQFIAQ1ImgDwAAEAAAEMAepA8aABAaABDaCaAPAAAQAAAQwB6kDw8AEA8AEM8JoA8AABAAABDAHqQPFIAQFIAQ1ImgDwAAEAAAEMAepA8aABAaABDaCaAPAAAQAAAQwB6kEE8AEU8AEg8JoBBAABFAABIAHqQQVIARVIASFImgEEAAEUAAEgAepBBaABFaABIaCaAQQAARQAASAB6kEE8AEU8AEg8JoBBAABFAABIAHqQQVIARVIASFImgEEAAEUAAEgAepBBaABFaABIaCaAQQAARQAASAB6kEE8AEU8AEg8JoBBAABFAABIAHqQQVIARVIASFImgEEAAEUAAEgAepBBaABFaABIaCaAQQAARQAASAB6kEE8AEU8AEg8JoBBAABFAABIAHqQQVIARVIASFImgEEAAEUAAEgAepBBaABFaABIaCaAQQAARQAASAB6kEM8AEc8AEo8AE08JoBDAABHAABKAABNAHqQQ1IAR1IASlIATVImgEMAAEcAAEoAAE0AepBDaABHaABKaABNaCaAQwAARwAASgAATQB6kEM8AEc8AEo8AE08JoBDAABHAABKAABNAHqQQ1IAR1IASlIATVImgEMAAEcAAEoAAE0AepBDaABHaABKaABNaCaAQwAARwAASgAATQB6kEM8AEc8AEo8AE08JoBDAABHAABKAABNAHqQQ1IAR1IASlIATVImgEMAAEcAAEoAAE0AepBDaABHaABKaABNaCaAQwAARwAASgAATQB6kEM8AEc8AEo8AE08JoBDAABHAABKAABNAHqQQ1IAR1IASlIATVImgEMAAEcAAEoAAE0AepBDaABHaABKaABNaCaAQwAARwAASgAATQB6kDw8AEA8AEM8JoA8AABAAABDAHqQPFIAQFIAQ1ImgDwAAEAAAEMAepA8aABAaABDaCaAPAAAQAAAQwB6kDw8AEA8AEM8JoA8AABAAABDAHqQPFIAQFIAQ1ImgDwAAEAAAEMAepA8aABAaABDaCaAPAAAQAAAQwB6kDw8AEA8AEM8JoA8AABAAABDAHqQPFIAQFIAQ1ImgDwAAEAAAEMAepA8aABAaABDaCaAPAAAQAAAQwB6kDw8AEA8AEM8JoA8AABAAABDAHqQPFIAQFIAQ1ImgDwAAEAAAEMAepA8aABAaABDaCaAPAAAQAAAQwB6kEE8AEU8AEg8JoBBAABFAABIAHqQQVIARVIASFImgEEAAEUAAEgAepBBaABFaABIaCaAQQAARQAASAB6kEE8AEU8AEg8JoBBAABFAABIAHqQQVIARVIASFImgEEAAEUAAEgAepBBaABFaABIaCaAQQAARQAASAB6kEE8AEU8AEg8JoBBAABFAABIAHqQQVIARVIASFImgEEAAEUAAEgAepBBaABFaABIaCaAQQAARQAASAB6kEE8AEU8AEg8JoBBAABFAABIAHqQQVIARVIASFImgEEAAEUAAEgAepBBaABFaABIaCaAQQAARQAASAAA/y8A";
+
+const CRAB_CANON_BASE64 = "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";
+
+const BWV1007_BASE64 = "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";
+</script>
+</body>
+</html>
