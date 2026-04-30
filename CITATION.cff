@@ -16,6 +16,17 @@ authors:
     email: "rogelio@cimat.mx"
 license: "MIT"
 url: "https://github.com/yoyontzin/padicmidi"
+doi: "10.5281/zenodo.19909665"
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.19909665"
+    description: "Zenodo DOI for PAdicMIDI v1.0.0 (and concept DOI for all versions)."
+  - type: url
+    value: "https://zenodo.org/records/19909665"
+    description: "Zenodo record for v1.0.0."
+  - type: url
+    value: "https://github.com/yoyontzin/padicmidi/releases/tag/v1.0.0"
+    description: "GitHub release v1.0.0."
 keywords:
   - p-adic analysis
   - symbolic music
@@ -35,7 +46,8 @@ preferred-citation:
       website: "https://www.cimat.mx/~rogelio.perez"
   version: "1.0.0"
   year: 2026
-  url: "https://github.com/yoyontzin/padicmidi"
+  doi: "10.5281/zenodo.19909665"
+  url: "https://doi.org/10.5281/zenodo.19909665"
 references:
   - type: article
     title: "Prime-power indexed multiscale graph diagnostics for symbolic temporal data: methodological exploration and delimitation via BWV 1007"

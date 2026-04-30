@@ -2,6 +2,7 @@
 
 > *Conjunto de herramientas en Python para el análisis jerárquico, ultramétrico y p-ádico de datos musicales simbólicos.*
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19909665.svg)](https://doi.org/10.5281/zenodo.19909665)
 [![Licencia: MIT](https://img.shields.io/badge/Licencia-MIT-blue.svg)](LICENSE)
 [![Tests: 28 pasan](https://img.shields.io/badge/tests-28%20pasan-brightgreen)](tests/)
 [![Python: 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](pyproject.toml)
@@ -127,7 +128,9 @@ siguiente:
                   Ultrametric, and p-adic Analysis of Symbolic Music Data},
   version      = {1.0.0},
   year         = {2026},
-  url          = {https://github.com/yoyontzin/padicmidi}
+  publisher    = {Zenodo},
+  doi          = {10.5281/zenodo.19909665},
+  url          = {https://doi.org/10.5281/zenodo.19909665}
 }
 ```
 
