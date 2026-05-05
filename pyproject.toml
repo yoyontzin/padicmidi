@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = { file = "LICENSE" }
 authors = [
-    { name = "J. Rogelio Pérez-Buendía", email = "rogelio@cimat.mx" }
+    { name = "J. Rogelio Pérez-Buendía", email = "rogelio.perez@cimat.mx" }
 ]
 keywords = [
     "p-adic",
