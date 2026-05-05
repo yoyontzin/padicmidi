@@ -7,7 +7,7 @@
 SECIHTI — Centro de Investigación en Matemáticas (CIMAT), Unidad Mérida.
 ORCID: [0000-0002-7739-4779](https://orcid.org/0000-0002-7739-4779)
 Web: [www.cimat.mx/~rogelio.perez](https://www.cimat.mx/~rogelio.perez)
-Email: rogelio@cimat.mx (institutional)
+Email: rogelio.perez@cimat.mx (institutional)
 
 Designed the mathematical framework, implemented the software, and prepared the documentation.
 
